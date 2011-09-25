@@ -1,0 +1,2010 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><META http-equiv="Content-Type" content="text/html; charset=utf-8"><style type="text/css" media="print">.hide{display:none}</style></head><body style="margin:0;padding:0"><div style="margin:1ex">
+
+
+
+
+
+<div>
+
+  <p align="center"><font color="#01799F" size="6" face="Arial"><b>Монады</b></font></p>
+<p><font color="#01799F" size="5" face="Arial"><b>Введение</b></font></p>
+<p align="justify"><font size="2" face="Arial">Слово «монады» 
+знакомо почти всякому, кто изучал функциональное 
+программирование. Многих отпугивает 
+кажущаяся абстрактность и математичность 
+монад и необходимость использовать их 
+для, казалось бы, самых простых вещей, 
+таких как вывод на экран. В сети существует 
+множество учебных статей о монадах, а 
+также поверье, что каждый новичок в функциональном 
+программировании рано или поздно должен 
+такую статью написать. Эти статьи освещают 
+монады с различных точек зрения – с точки 
+зрения лежащих в их основе математических 
+концепций, либо с точки зрения «лазейки» 
+в мир императивного программирования, 
+либо с чисто практической точки зрения, 
+либо крайне всесторонне и обширно. Данный 
+текст призван осветить их с еще одной 
+точки зрения – монады будут представлены 
+как обобщение некоторых привычных идиом, 
+а также как еще один метод для их абстракции.</font></p>
+<p><font color="#01799F" size="5" face="Arial"><b>Цель 
+и целевая аудитория</b></font></p>
+<p align="justify"><font size="2" face="Arial">Предполагается, 
+что читатель знаком с основами языка 
+«Хаскелл» и с методологией функционального 
+программирования в целом. Получить необходимые 
+знания можно в статьях, указанных в конце 
+данного текста. Его цель – рассказать, 
+что такое монады, и дать понимание этой 
+концепции на интуитивном уровне с помощью 
+нескольких примеров, стандартных и не 
+очень. Этот текст не является практическим 
+руководством по использованию тех или 
+иных стандартных монад. </font></p>
+<p><font color="#01799F" size="5" face="Arial"><b>Три знакомых 
+примера</b></font></p>
+<p align="justify"><font size="2" face="Arial">Здесь мы рассмотрим 
+три примера типичных идиом – последовательные 
+вычисления, вычисления с обработкой отсутствующих 
+значений и вычисления со множеством возможных 
+результатов – и увидим между ними общность.</font> <br>
+</p>
+<p><font color="#01799F" size="3" face="Arial"><b>Последовательные 
+вычисления (монада IO)</b></font></p>
+<p align="justify"><font size="2" face="Arial">Рассмотрим 
+операцию &quot;;&quot;, означающую &quot;А затем&quot;:</font> <br>
+</p>
+<p><font size="2" face="Courier New">(print &quot;Hello&quot;) ; (print 
+&quot;Goodbye&quot;)</font> <br></p>
+<p align="justify"><font size="2" face="Arial">Эта строчка 
+означает: Написать на экране &quot;Hello&quot;, <i>
+а затем</i> - написать &quot;Goodbye&quot;. </font></p>
+<p align="justify"><font size="2" face="Arial">Исполнение 
+этой программы выглядит так: </font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">В момент времени 
+  t<sub>0</sub> на экране ничего не написано</font></li>
+  <li><font size="2" face="Arial">В момент времени 
+  t<sub>1</sub> экран изменяется под действием </font><font size="2" face="Courier New">print “Hello”</font><font size="2" face="Arial">  
+  ; на экране «Hello» </font></li>
+  <li><font size="2" face="Arial">В момент времени 
+  t<sub>2</sub> экран изменяется под действием </font><font size="2" face="Courier New">print “Goodbye”; </font><font size="2" face="Arial">на 
+  экране «Hello Goodbye» </font></li>
+</ul>
+<p align="justify"><font size="2" face="Arial">Запишем эту 
+последовательность действий как систему 
+уравнений: </font></p>
+<p><font size="2" face="Courier New">world(t=0) = &lt;empty screen&gt;</font></p>
+<p><font size="2" face="Courier New">world(t=1) = world(t=0) + (print 
+&quot;Hello&quot;)</font></p>
+<p><font size="2" face="Courier New">world(t=2) = world(t=1) + (print 
+&quot;Goodbye&quot;)</font></p>
+<p align="justify"><font size="2" face="Arial">Этот способ 
+программирования – выражение решения 
+задачи через последовательность действий 
+– самый распространенный и является 
+основным в традиционных языках: Си, Java 
+и т.п.</font></p>
+<p align="justify"><font color="#506580" size="2" face="Arial">Легко 
+понять, что в мире императивных вычислений, 
+ввода-вывода и т.п., все такие системы 
+уравнений имеют вид &quot;цепочки&quot;: </font><font size="2" face="Courier New">мир(n+1) = мир(n) + действие</font><font color="#506580" size="2" face="Arial">. Нельзя достать 
+из-за пазухи старое состояние мира и произвести 
+действие с ним, так как разные состояния 
+мира не могут существовать одновременно 
+– то есть, невозможно уравнение, например, </font><font size="2" face="Courier New">мир(10)=мир(3)+(print “Hello”)</font><font color="#506580" size="2" face="Arial">. </font></p>
+<p align="justify"><font size="2" face="Arial">Таким образом, 
+последовательность действий </font><font size="2" face="Courier New"><b>A1; 
+A2; A3</b></font><font size="2" face="Arial">... можно представить 
+себе как </font><font size="2" face="Courier New"><b>A1 `затем` 
+(A2 `затем` (A3 `затем` ...))</b>;</font><font size="2" face="Arial"> 
+для описания последовательности действий 
+достаточно бинарной операции `затем` 
+(она же – точка с запятой, “;” – но ее 
+мы не привыкли воспринимать как бинарную 
+операцию). Отметим, что эта операция ассоциативна 
+(то есть, (</font><font size="2" face="Courier New"><b>(A1 `затем` 
+A2) `затем` A3) == (A1 `затем` (A2 `затем` A3))</b></font><font size="2" face="Arial">), поэтому скобки можно опустить 
+– как и делается во всех языках. Однако 
+более близко к интуитивному пониманию 
+(сначала первое действие, потом все остальное) 
+воспринимать операцию </font><font size="2" face="Courier New"><b>`затем`</b></font><font size="2" face="Arial"> как правоассоциативную.</font></p>
+<p align="justify"><font size="2" face="Arial">Встает вопрос, 
+что считать значением </font><font size="2" face="Courier New"><b>(A 
+`затем` B)</b></font><font size="2" face="Arial">: значение 
+А, значение B или что-то еще? Традиционный 
+и логичный способ состоит в том, чтобы 
+взять в качестве результата значение 
+B. В самом деле: если понадобилось <i>сначала</i> 
+вычислить А, а затем В – значит, возможность 
+корректного вычисления В <i>зависит</i> 
+от вычисления A: Например, в последовательности </font><font size="2" face="Courier New"><b>(послать 
+запрос к БД) `затем` (дождаться 
+ответа от БД)</b></font><font size="2" face="Arial"> корректность 
+операции «дождаться ответа» зависит 
+от того, был ли отослан запрос. </font></p>
+<p align="justify"><font size="2" face="Arial">А раз нас волнует 
+корректность выполнения операции B, значит 
+нас волнует именно ее значение, а не значение 
+A. Во всяком случае, это так в тех случаях, 
+когда мы выполняем </font><font size="2" face="Courier New"><b>(А 
+`затем` B)</b></font><font size="2" face="Arial"> для того, 
+чтобы получить какое-то значение, а не 
+только ради побочных эффектов.</font></p>
+<p align="justify"><font size="2" face="Arial">C чисто функциональной 
+точки зрения (если считать, что единственное, 
+что важно в вычислении – это его значение) 
+можно было бы сказать, что операция </font><font size="2" face="Courier New"><b>`затем`</b></font><font size="2" face="Arial"> 
+не нужна – и тогда в вышеприведенном 
+примере можно было бы просто «дождаться 
+ответа от БД». Однако очевидно, что это 
+неправильно; необходимо сначала полностью 
+выполнить операцию «послать запрос», 
+и лишь потом приступить к выполнению 
+«дождаться ответа».</font></p>
+<p align="justify"><font size="2" face="Arial"><b>Мораль:</b> 
+В мире вычислений с побочными эффектами 
+(ввод-вывод, изменение переменных) вычисления 
+связываются операцией &quot;А затем&quot;, 
+означающей &quot;Сначала первое, и только 
+потом - все остальное&quot;</font> <br></p>
+<p><font color="#01799F" size="3" face="Arial"><b>Вычисления 
+с обработкой отсутствующих значений 
+(монада Maybe)</b></font></p>
+<p align="justify"><font size="2" face="Arial">Рассмотрим 
+синтетический, но, типичный и, должно 
+быть, знакомый многим по стилю пример: 
+Программа открывает файл, читает из него 
+строку и ищет в базе данных значение, 
+соответствующее этой строке. Если на 
+каком-то этапе происходит ошибка, возвращается 
+null.</font> <br></p>
+<p><font size="2" face="Courier New">File f = open(&quot;keys.txt&quot;)</font><font color="#FF0000" size="2" face="Courier New">;</font></p>
+<p><font size="2" face="Courier New">if(f == null)</font></p>
+<p>      <font size="2" face="Courier New">return 
+null</font><font color="#FF0000" size="2" face="Courier New">;</font> <br>
+</p>
+<p><font size="2" face="Courier New">String key = readLine(f)</font><font color="#FF0000" size="2" face="Courier New">;</font></p>
+<p><font size="2" face="Courier New">if(keys == null)</font></p>
+<p>      <font size="2" face="Courier New">return 
+null</font><font color="#FF0000" size="2" face="Courier New">;</font> <br>
+</p>
+<p><font size="2" face="Courier New">String value = ourDatabase.get(key)</font><font color="#FF0000" size="2" face="Courier New">;</font></p>
+<p><font size="2" face="Courier New">if(value == null)</font></p>
+<p>      <font size="2" face="Courier New">return 
+null</font><font color="#FF0000" size="2" face="Courier New">;</font> <br>
+</p>
+<p><font size="2" face="Courier New">return &quot;The value is: &quot; 
++ value</font><font color="#FF0000" size="2" face="Courier New">;</font> <br>
+</p>
+<p align="justify"><font size="2" face="Arial">Теперь используем 
+вместо &quot;;&quot; (&quot;а затем&quot;) операцию 
+&quot;;?&quot; (&quot;а затем, если получилось&quot;)</font> <br>
+</p>
+<p><font size="2" face="Courier New">File f = open(&quot;keys.txt&quot;) 
+;?</font></p>
+<p><font size="2" face="Courier New">String key = readLine(f) ;?</font></p>
+<p><font size="2" face="Courier New">String value = ourDatabase.get(key) 
+;?</font></p>
+<p><font size="2" face="Courier New">return &quot;The value is: &quot; 
++ value;</font> <br></p>
+<p align="justify"><font size="2" face="Arial">Этот пример 
+легко обобщить до чуть более осмысленной 
+обработки ошибок – когда в качестве сигнала 
+об ошибке выступает значение определенного 
+типа «Exception». Суть состоит в том, что функции 
+возвращают значения двух сортов – «результаты» 
+и «сигналы об ошибке», и возвращение ошибки 
+в промежуточном вычислении приводит 
+к возвращению этой же ошибки во всем вычислении.</font></p>
+<p align="justify"><font size="2" face="Arial"><b>Мораль:</b> 
+В мире, где что-то иногда не получается, 
+вычисления связываются операцией &quot;А 
+затем, если получилось&quot;, означающей 
+&quot;Сначала первое, и если первое успешно 
+- то тогда все остальное, а если произошла 
+ошибка E – то возвратить ошибку E&quot;. В 
+примере рассмотрен частный случай, когда 
+ошибка бывает только одна – «получился 
+null».</font> <br></p>
+<p><font color="#01799F" size="3" face="Arial"><b>Вычисления 
+с несколькими результатами (монада List)</b></font></p>
+<p align="justify"><font size="2" face="Arial">Рассмотрим 
+вычисления, возвращающие несколько значений. 
+Они могут возвращать их непосредственно 
+– как, например, процедура «выдать список 
+файлов в указанной папке» или «разбить 
+строку на список символов» - так и в результате 
+комбинирования нескольких таких вычислений:</font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">процедура «получить 
+  все заказы во всех отделах всех магазинов», 
+  основывающаяся на процедурах «получить 
+  список магазинов», «получить список отделов 
+  магазина» и «получить список заказов 
+  отдела»</font></li>
+  <li><font size="2" face="Arial">процедура «получить 
+  список всех слов в данном файле», основывающаяся 
+  на процедурах «получить список строк 
+  в файле» и «получить список слов в строке»</font></li>
+  <li><font size="2" face="Arial">процедура «выдать 
+  список всех файлов в указанной папке 
+  и ее подпапках», складывающая свой результат 
+  из результатов рекурсивных вызовов</font></li>
+</ul>
+<p align="justify"><font size="2" face="Arial">Вот типичная 
+реализация первой из этих процедур, вычисляющая 
+суммарную стоимость заказов.</font></p>
+<p><font size="2" face="Courier New">foreach(Shop s : getShops()) {</font></p>
+<p><font size="2" face="Courier New">    foreach(Department 
+d : getDepartments(s)) {</font></p>
+<p><font size="2" face="Courier New">        
+foreach(Order ord : getOrders(d)) {</font></p>
+<p><font size="2" face="Courier New">            
+sum += ord.getCost();</font></p>
+<p><font size="2" face="Courier New">        
+}</font></p>
+<p><font size="2" face="Courier New">    }</font></p>
+<p><font size="2" face="Courier New">}</font></p>
+<p align="justify"><font size="2" face="Arial">Теперь рассмотрим 
+случай, когда количество &quot;уровней&quot; 
+перебора неизвестно - например, получение 
+списка файлов в папке и подпапках.</font></p>
+<p><font size="2" face="Courier New">listFilesRec(File file) {</font></p>
+<p><font size="2" face="Courier New">    List&lt;File&gt; 
+res;</font></p>
+<p><font size="2" face="Courier New">    res.add(file);</font></p>
+<p><font size="2" face="Courier New">    foreach(File 
+sub : getContents(file)) {</font></p>
+<p><font size="2" face="Courier New">        
+res.addAll(listFilesRec(sub));</font></p>
+<p><font size="2" face="Courier New">    }</font></p>
+<p><font size="2" face="Courier New">    return res;</font></p>
+<p><font size="2" face="Courier New">}</font></p>
+<p align="justify"><font size="2" face="Arial">А теперь перепишем 
+эти примеры с использованием операции 
+&quot;;*&quot;, &quot;прошивающей&quot; следующую 
+операцию через <b>все</b> результаты предыдущей.</font></p>
+<p><font size="2" face="Courier New">Shop s = getShops() ;*</font></p>
+<p><font size="2" face="Courier New">Department d = getDepartments(s) 
+;*</font></p>
+<p><font size="2" face="Courier New">Order ord = getOrders(d) ;*</font></p>
+<p><font size="2" face="Courier New">sum += ord.getCost();</font> <br>
+</p>
+<p><font size="2" face="Courier New">listFilesRec(File file) {</font></p>
+<p><font size="2" face="Courier New">    contents = getContents(file) 
+;*</font></p>
+<p>      <font size="2" face="Courier New">rec 
+= listFilesRec(contents) ;*</font></p>
+<p><font size="2" face="Courier New">    return [file]++[rec];</font></p>
+<p><font size="2" face="Courier New">}</font></p>
+<p align="justify"><font size="2" face="Arial"><b>Мораль:</b> 
+В мире переборов и недетерминированных 
+вычислений вычисления связываются операцией 
+&quot;И для каждого результата - ...&quot;: “И 
+для каждого результата </font><font size="2" face="Courier New">getOrders(d)</font><font size="2" face="Arial"> выполнить </font><font size="2" face="Courier New">sum 
++= ord.getCost()</font><font size="2" face="Arial">”.</font></p>
+<p><font color="#01799F" size="5" face="Arial"><b>Что общего?</b></font></p>
+<p align="justify"><font size="2" face="Arial">Пытливый читатель 
+уже заметил, что во всех трех случаях 
+имело место переопределение стратегий 
+связывания двух вычислений - первого 
+и оставшегося, переопределение оператора 
+«;». Можно сказать, что в этом и состоит 
+суть концепции монад. Теперь, чтобы пользоваться 
+этим как средством абстракции, понадобится 
+формализовать эту концепцию.</font> <br>
+</p>
+<p align="justify"><font size="2" face="Arial">Формализуем 
+понятие &quot;связывания&quot; вычислений, 
+то есть обобщим операции </font><font size="2" face="Courier New"><b>;</b></font><font size="2" face="Arial">, </font><font size="2" face="Courier New"><b>;?</b></font><font size="2" face="Arial">, </font><font size="2" face="Courier New"><b>;*</b></font><font size="2" face="Arial"> до одной операции </font><font size="2" face="Courier New"><b>(&gt;&gt;=)</b></font><font size="2" face="Arial">.</font></p>
+<ol type="1">
+  <li><font size="2" face="Arial">Это полиморфная 
+  операция – то есть, логика ее работы никак 
+  не зависит от того, значения каких типов 
+  (и, тем более, какие именно значения) она 
+  связывает. Так, операция «;*» работает 
+  абсолютно одинаково, когда связывает 
+  список магазинов с вычислением, зависящим 
+  от магазина, и когда связывает список 
+  файлов с вычислением, зависящим от файла.</font></li>
+  <li><font size="2" face="Arial">Тип операции (&gt;&gt;=), 
+  очевидно, зависит от типов первого и второго 
+  вычисления; там будут, как минимум 2 типовых 
+  переменных - a (тип результата первого 
+  вычисления), b (тип результата второго 
+  вычисления). Еще раз акцентирую внимание 
+  на полиморфизме: тип будет вида </font><font size="2" face="Courier New"><b>forall a, b . 
+  (типовое выражение, 
+  зависящее от a и b)</b></font></li>
+  <li><font size="2" face="Arial">Результатом этой 
+  операции является результат второго 
+  вычисления.<b> </b></font><font size="2" face="Courier New"><b>forall 
+  a, b . ... -&gt; b</b></font></li>
+  <li><font size="2" face="Arial">Второе вычисление 
+  зависит от первого, иначе бы не имело 
+  смысла учреждать какую-то там монаду, 
+  а достаточно было бы просто вычислить 
+  второе.</font></li>
+</ol>
+<p align="justify"><font size="2" face="Arial">Получается 
+что-то вроде </font><font size="2" face="Courier New"><b>a 
+-&gt; (a -&gt; b) -&gt; b</b></font><font size="2" face="Arial">; тут 
+a - первое вычисление, а </font><font size="2" face="Courier New"><b>(a 
+-&gt; b)</b></font><font size="2" face="Arial"> - второе, зависящее 
+от &quot;параметра&quot;, вычисляемого первым. 
+Это близко к истине (впрочем, подвох чувствуется: 
+функция с таким типом всего одна – функция 
+аппликации </font><font size="2" face="Courier New"><b>($) </b></font><font size="2" face="Arial">– и она явно не тянет на монаду), 
+однако есть очень важное замечание: Мы 
+предполагаем, что просто &quot;значение&quot; 
+и &quot;значение, вычисленное в монаде&quot; 
+- это одно и то же - однако это совсем не 
+одно и то же! Например, вычислить значение 
+&quot;Hello&quot; как &quot;He&quot;++&quot;llo&quot;, или прочитать 
+с клавиатуры &quot;Hello&quot; - это очень разные 
+вещи, вторая с побочными эффектами, а 
+первая - без! На самом деле, каждая монада 
+помещает значения в &quot;обертку&quot;, определенным 
+образом модифицируя их тип. Например, </font><font size="2" face="Courier New"><b>readLine</b></font><font size="2" face="Arial"> 
+имеет тип не </font><font size="2" face="Courier New"><b>String</b></font><font size="2" face="Arial">, а </font><font size="2" face="Courier New"><b>IO 
+String</b></font><font size="2" face="Arial">. А гипотетическая 
+функция </font><font size="2" face="Courier New"><b>lookupUserByName</b></font><font size="2" face="Arial"> имеет тип не </font><font size="2" face="Courier New"><b>String 
+-&gt; User</b></font><font size="2" face="Arial">, а </font><font size="2" face="Courier New"><b>String 
+-&gt; Maybe User</b></font><font size="2" face="Arial">. </font></p>
+<p align="justify"><font size="2" face="Arial">Таким образом, <b>
+тип монадного вычисления в монаде m - это 
+не &quot;a&quot;, а &quot;m a&quot;.</b> Это можно интерпретировать 
+как &quot;Значение, полученное определенным 
+способом&quot; - например, &quot;значение, полученное 
+с side-эффектами&quot; (монада IO) или &quot;значение, 
+которое не факт что получилось&quot; (монада 
+Maybe), или &quot;несколько вариантов значения&quot; 
+(монада List). Монада прибавляет ко всем 
+значениям некоторое прилагательное.</font></p>
+<p align="justify"><font size="2" face="Arial">Теперь получается 
+что-то типа </font><font size="2" face="Courier New"><b>m a 
+-&gt; (m a -&gt; m b) -&gt; m b</b></font><font size="2" face="Arial">. 
+Это еще ближе, однако второму вычислению, 
+на самом деле, не нужно знать про &quot;обернутость&quot; 
+своих аргументов. Для функции </font><font size="2" face="Courier New">print</font><font size="2" face="Arial"> неважно, как была получена 
+строчка, которую ее просят вывести, а 
+для </font><font size="2" face="Courier New">getContents</font><font size="2" face="Arial"> неважно, что его на самом 
+деле вызывают на нескольких файлах, а 
+полученные списки складывают. Об этих 
+связях должны заботиться не эти функции, 
+а реализация операции связывания  
+«&gt;&gt;=» <i>в данной монаде</i> – в точности 
+в этом и состоит назначение операции 
+«&gt;&gt;=»</font></p>
+<p align="justify"><font size="2" face="Arial">Итак, получается 
+тип </font><font size="2" face="Courier New"><b>(&gt;&gt;=) :: 
+m a -&gt; (a -&gt; m b) -&gt; m b</b></font><font size="2" face="Arial">. 
+Это – окончательный и правильный вариант. 
+Этот тип можно прочитать так: (под термином 
+«монадное вычисление» будем понимать 
+вычисление типа </font><font size="2" face="Courier New"><b>m 
+a</b></font><font size="2" face="Arial">). </font><font size="2" face="Courier New"><b>(&gt;&gt;=)</b></font><font size="2" face="Arial"> в монаде </font><font size="2" face="Courier New"><b>m</b></font><font size="2" face="Arial"> связывает монадное вычисление 
+параметра </font><font size="2" face="Courier New"><b>(m a)</b></font><font size="2" face="Arial"> с монадным вычислением, 
+зависящим от этого параметра </font><font size="2" face="Courier New"><b>(a 
+-&gt; m b)</b></font><font size="2" face="Arial">, давая монадный 
+результат </font><font size="2" face="Courier New"><b>(m 
+b)</b></font><font size="2" face="Arial">.</font> <br></p>
+<p align="justify"><font size="2" face="Arial">Итак, мы научились 
+связывать два монадных вычисления – 
+однако пока нет способа в общем случае 
+создать монадное вычисление «из ничего» 
+для произвольной монады. В принципе, нет 
+необходимости в наличии такого способа, 
+т.к. мы всякий раз будем использовать 
+какую-нибудь конкретную монаду – например, 
+монаду списков – а для конкретных случаев 
+способ создать монадное значение обычно 
+уже существует: например, нет ничего сложного 
+в том, чтобы создать список значений (значение 
+типа </font><font size="2" face="Courier New"><b>List a</b></font><font size="2" face="Arial">).</font></p>
+<p align="justify"><font size="2" face="Arial">Однако поскольку 
+такая операция в той или иной форме, явно 
+или неявно, должна существовать в каждой 
+монаде, то имеет смысл добавить ее в понятие 
+монады. Такая операция называется </font><font size="2" face="Courier New"><b>return</b></font><font size="2" face="Arial"> 
+и имеет тип </font><font size="2" face="Courier New"><b>a -&gt; 
+m a</b>. </font><font size="2" face="Arial">Она берет конкретное, 
+фиксированное значение, и &quot;поднимает&quot; 
+его в монаду; приписывает прилагательное 
+данной монады к данному существительному 
+- значению. Она делает из значения - то, 
+что получилось бы, если бы это значение 
+было вычислено в монаде. Сейчас будет 
+понятнее.</font></p>
+<p align="justify"><font size="2" face="Arial">Например, в 
+монаде IO - </font><font size="2" face="Courier New"><b>return 
+&quot;Hello&quot; :: IO String</b></font><font size="2" face="Arial">, 
+и это вычисление представляет собой &quot;Hello, 
+вычисленное якобы с side-эффектами&quot;. 
+В Maybe - </font><font size="2" face="Courier New"><b>return &quot;Hello&quot; 
+= Just &quot;Hello&quot;</b></font><font size="2" face="Arial">, а 
+в List - </font><font size="2" face="Courier New"><b>return &quot;Hello&quot; 
+= [&quot;Hello&quot;]</b></font><font size="2" face="Arial">. Причины 
+такого выбора реализаций return интуитивно 
+понятны, однако сейчас станет ясно их 
+теоретическое обоснование.</font> <br>
+</p>
+<p align="justify"><font size="2" face="Arial">Напомним: </font><font size="2" face="Courier New"><b>(&gt;&gt;=)</b></font><font size="2" face="Arial"> 
+в монаде </font><font size="2" face="Courier New"><b>m</b></font><font size="2" face="Arial"> связывает монадное вычисление 
+параметра с монадным вычислением, зависящим 
+от этого параметра.<b> </b>
+Если выполнить «монадное вычисление 
+параметра» с помощью функции </font><font size="2" face="Courier New"><b>return</b></font><font size="2" face="Arial"> , то будет логичным потребовать, 
+что эффект будет таким же, как и если бы 
+параметр был просто передан второму вычислению: </font><font size="2" face="Courier New"><b>(return 
+x &gt;&gt;= f) = f x </b></font><font size="2" face="Arial">Это – 
+первый из трех <i>законов монад</i>.</font></p>
+<p align="justify"><font size="2" face="Arial">Легко проверить, 
+что для вышеприведенных монад такие реализации 
+(</font><font size="2" face="Courier New"><b>return &quot;Hello&quot; 
+= Just &quot;Hello&quot; </b></font><font size="2" face="Arial">и т.п.) 
+удовлетворяют этому закону.</font></p>
+<p align="justify"><font size="2" face="Arial">Есть еще два 
+менее очевидных закона; их назначение 
+будет ясно из их определений. Итак, все <b>
+три закона монад</b>:</font> <br></p>
+<p><font color="#01799F" size="3" face="Arial"><b>Законы монад</b></font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">Согласованность 
+  return и (&gt;&gt;=) : </font><font size="2" face="Courier New"><b>(return 
+  x &gt;&gt;= f) = f x</b></font></li>
+  <li><font size="2" face="Arial">Ассоциативность 
+  (&gt;&gt;=) : (</font><font size="2" face="Courier New"><b>(x &gt;&gt;= 
+  f) &gt;&gt;= g) = (x &gt;&gt;= (\y -&gt; 
+  f y &gt;&gt;= g)) </b></font><font size="2" face="Arial">. Этот 
+  закон позволяет воспринимать последовательность 
+  a ; b ; c ; … как монолитную и не заботиться 
+  о расстановке скобок в ней. Можно в терминах 
+  операций </font><font size="2" face="Courier New"><b>;?</b></font><font size="2" face="Arial"> , </font><font size="2" face="Courier New"><b>;*</b></font><font size="2" face="Arial"> , </font><font size="2" face="Courier New"><b>;</b></font><font size="2" face="Arial"> (обозначим их все символом 
+  «</font><font size="2" face="Courier New"><b>;;</b></font><font size="2" face="Arial">») 
+  переформулировать этот закон так:</font></li>
+</ul>
+<p><font size="2" face="Courier New"><b>z = ( y = x ;;</b></font></p>
+<p><font size="2" face="Courier New"><b>      
+return (f y) ) ;;</b></font></p>
+<p><font size="2" face="Courier New"><b>return (g z)</b></font> <br>
+</p>
+<p><font size="2" face="Courier New"><b>равносильно</b></font> <br>
+</p>
+<p><font size="2" face="Courier New"><b>y = x ;;</b></font></p>
+<p><font size="2" face="Courier New"><b>( z = f y ;;</b></font></p>
+<p><font size="2" face="Courier New"><b>  return (g z) )</b></font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">Правая единица: </font><font size="2" face="Courier New"><b>(x &gt;&gt;= 
+  return) = x </b></font><font size="2" face="Arial">. Можно переписать 
+  этот закон как </font><font size="2" face="Courier New"><b>(x 
+  &gt;&gt;= (\a -&gt; return a)) = x</b></font><font size="2" face="Arial">, 
+  то есть, связывание монадного вычисления </font><font size="2" face="Courier New"><b>x</b></font><font size="2" face="Arial"> 
+  с вычислением, зависящим от параметра 
+  и просто-напросто возвращающим этот параметр, 
+  есть тождественная функция.</font></li>
+</ul>
+<p align="justify"><font size="2" face="Arial">Теперь можно 
+окончательно сказать, что такое монада: </font> <br>
+</p>
+<p><font color="#01799F" size="3" face="Arial"><b>Определение 
+монады</b></font></p>
+<p align="justify"><font size="2" face="Arial">Монадой называется 
+тройка </font><font size="2" face="Courier New">(m, return, &gt;&gt;=) </font><font size="2" face="Arial">, где:</font></p>
+<p><font size="2" face="Courier New">m – тип с одним аргументом</font></p>
+<p><font size="2" face="Courier New">return :: forall a . a -&gt; m 
+a</font></p>
+<p><font size="2" face="Courier New">(&gt;&gt;=) :: forall a, b . m 
+a -&gt; (a -&gt; m b) -&gt; m b</font></p>
+<p align="justify"><font size="2" face="Arial">Эти требования 
+формализуемы на уровне системы типов, 
+и в Prelude определен класс: </font></p>
+<p><font size="2" face="Courier New">class Monad m where</font></p>
+<p><font size="2" face="Courier New">    return :: a 
+-&gt; m a</font></p>
+<p><font size="2" face="Courier New">    (&gt;&gt;=) 
+:: m a -&gt; (a -&gt; m b) -&gt; m b</font></p>
+<p align="justify"><font size="2" face="Arial">В монаде обязаны 
+выполняться законы (они не могут быть 
+проверены компилятором, однако их нарушение, 
+скорее всего, приведет к экзотическим 
+багам):</font></p>
+<p><font size="2" face="Courier New">(return x) &gt;&gt;= f = f x</font></p>
+<p><font size="2" face="Courier New">(x &gt;&gt;= f) &gt;&gt;= g = x 
+&gt;&gt;= (\y -&gt; f y &gt;&gt;= g)</font></p>
+<p><font size="2" face="Courier New">(x &gt;&gt;= return) = x</font></p>
+<p align="justify"><font size="2" face="Arial">На самом деле, 
+в Prelude класс Monad обладает еще одним членом 
+– </font><font size="2" face="Courier New"><b>fail :: 
+String -&gt; m a</b></font><font size="2" face="Arial">, однако 
+его мы рассматривать не будем, ибо к самой 
+концепции монад он отношения не имеет, 
+и в грядущих версиях стандарта Хаскелла 
+планируется перенести эту функцию в отдельный 
+класс.</font></p>
+<p><font color="#01799F" size="5" face="Arial"><b>Стандартные 
+монады</b></font></p>
+<p><font color="#01799F" size="3" face="Arial"><b>Identity (тождественная 
+монада)</b></font></p>
+<p align="justify"><font size="2" face="Arial">Это - простейшая 
+монада, которой соответствует прилагательное 
+«обычный»: Identity String – «обычный String». То 
+есть, эта монада, по сути, не меняет ни 
+тип значений, ни стратегию связывания 
+вычислений. </font></p>
+<p><font size="2" face="Courier New">data Identity a = Identity a</font></p>
+<p><font size="2" face="Courier New">return a = Identity a</font></p>
+<p><font size="2" face="Courier New">(Identity a) &gt;&gt;= f = f a</font></p>
+<p align="justify"><font size="2" face="Arial">Пока неясно, 
+зачем нужна такая монада, но она находит 
+применение с монадными трансформерами, 
+которые в данной статье не рассматриваются. 
+Будем считать, что это чисто иллюстративный 
+простейший пример.</font> <br></p>
+<p><font color="#01799F" size="3" face="Arial"><b>IO (монада вычислений 
+с побочными эффектами)</b></font></p>
+<p align="justify"><font size="2" face="Arial">Каким будет 
+конструктор типа M? Как мы сейчас увидим, 
+вполне достаточно такого: </font></p>
+<p><font size="2" face="Courier New">data IO a = IO a.</font></p>
+<p align="justify"><font size="2" face="Arial">Тогда:</font></p>
+<p><font size="2" face="Courier New">return a = IO a</font></p>
+<p><font size="2" face="Courier New">(IO a) &gt;&gt;= f = f a</font> <br>
+</p>
+<p align="justify"><font size="2" face="Arial">Что-то больно 
+похоже на монаду Id! Что же мы упустили?</font></p>
+<p align="justify"><font size="2" face="Arial">Мы упустили 
+то, что назначение монады IO – последовательные 
+вычисления, то есть, f надо вычислять только <i>
+после</i> <i>того, как полностью вычислен 
+a</i>. На языке чистых функций это не описать, 
+но в хаскелле для таких случаев есть «потайная» 
+функция </font><font size="2" face="Courier New"><b>seq :: a 
+-&gt; b -&gt; b</b></font><font size="2" face="Arial">. Она вычисляет 
+первый аргумент, а потом возвращает второй.</font></p>
+<p align="justify"><font color="#506580" size="2" face="Arial">Первый 
+аргумент вычисляется, как обычно, лишь 
+до <i>слабой заголовочной нормальной формы </i>
+(weak head normal form). То есть, [1..] `seq` 5 имеет значение 
+5 (т.к. [1..] вычисляется лишь до формы 1:_), 
+а (length [1..]) `seq` 5 не завершается.</font></p>
+<p align="justify"><font size="2" face="Arial">На самом деле, </font><font size="2" face="Courier New"><b>(IO a) &gt;&gt;= f = a 
+`seq` (IO (f a))</b></font><font size="2" face="Arial">.</font> <br>
+</p>
+<p align="justify"><font size="2" face="Arial">Как мы говорили 
+в самом начале, «сохранялок» в мире нет, 
+и сущность последовательных вычислений 
+состоит в организации связанных в строго 
+линейную цепочку «состояний мира». Единственный 
+способ построить гарантированно непротиворечивую 
+модель такого способа вычислений – сделать 
+так, чтобы и на хаскелле нельзя было создать 
+&quot;сохранялку&quot;. Для этого достаточно 
+сделать конструктор </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial"> закрытым, невидимым снаружи 
+реализации модуля с монадой </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial">, чтобы нельзя было выполнить 
+по нему pattern matching: </font><font size="2" face="Courier New"><b>let 
+(IO s) = readLine in ....</b></font></p>
+<p align="justify"><font size="2" face="Arial">Тогда получится 
+удивительный и крайне важный эффект: <i>
+из монады IO нельзя вылезти!</i> Нельзя сделать 
+из </font><font size="2" face="Courier New"><b>IO a</b></font><font size="2" face="Arial"> - просто </font><font size="2" face="Courier New"><b>a</b></font><font size="2" face="Arial">; нельзя скрыть тот факт, 
+что некоторое значение вычисляется с 
+побочными эффектами. Если в функции используется 
+значение, имеющее тип </font><font size="2" face="Courier New"><b>... 
+-&gt; IO ...</b></font><font size="2" face="Arial">, то тип этой 
+функции также будет </font><font size="2" face="Courier New"><b>... 
+-&gt; IO ...</b></font><font size="2" face="Arial"> . То есть, 
+функция, использующая <i>хоть где-то</i> 
+побочные эффекты, сама получает аннотацию 
+&quot;осторожно, использует побочные эффекты&quot;, 
+и наоборот, если функция возвращает не </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial">, 
+то у нее нет побочных эффектов - это нам <i>
+гарантирует</i> <i>компилятор!</i> Этот факт 
+является одной из причин малого числа 
+багов в программах на Хаскелле – т.к. 
+исчезает одна из самых частых причин 
+багов: неявные взаимодействия и побочные 
+эффекты.</font></p>
+<p align="justify"><font color="#506580" size="2" face="Arial">На 
+самом деле есть функция </font><font size="2" face="Courier New"><b>System.IO.Unsafe.unsafePerformI<WBR>O 
+:: IO a -&gt; a</b></font><font color="#506580" size="2" face="Arial">, 
+но ей можно пользоваться только в самых 
+крайних случаях, т.к. вместе с ней приобретается 
+и весь букет императивных проблем с неявными 
+эффектами, который еще более усугубляется 
+ленивостью вычислений Хаскелла – т.к. 
+теперь становится неясно даже то, в какой 
+момент произойдет этот неявный эффект. 
+Фактически, эта функция относительно 
+безопасна только если ее побочный эффект 
+неважен (например, отладочная печать) 
+или всегда одинаков, т.е. вычисление <i>
+идемпотентно</i> (например, чтение глобального 
+файла конфигурации). Но и в этих случаях 
+ее лучше избегать.</font> <br></p>
+<p><font color="#01799F" size="3" face="Arial"><b>Maybe (монада 
+вычислений с обработкой отсутствующих 
+значений)</b></font></p>
+<p align="justify"><font size="2" face="Arial">Здесь есть два 
+класса значений – «обычные» и специальное 
+значение «значение отсутствует»:</font></p>
+<p><font size="2" face="Courier New">data Maybe a = Nothing </font></p>
+<p><font size="2" face="Courier New">             
+| Just a</font></p>
+<p align="justify"><font size="2" face="Arial">Реализация 
+тривиальна: Связывание «просто» параметра 
+с параметризованным вычислением – это 
+передача параметра вычислению, связывание 
+отсутствующего параметра с параметризованным 
+вычислением – отсутствующий результат.</font></p>
+<p><font size="2" face="Courier New">return a = Just a</font></p>
+<p><font size="2" face="Courier New">Nothing &gt;&gt;= f = Nothing </font></p>
+<p><font size="2" face="Courier New">(Just a) &gt;&gt;= f = f a</font> <br>
+</p>
+<p><font color="#01799F" size="3" face="Arial"><b>List (монада 
+вычислений с несколькими результатами)</b></font></p>
+<p align="justify"><font size="2" face="Arial">Здесь у каждого 
+значения есть несколько &quot;вариантов&quot;. 
+Если одно значение зависит от другого, 
+то перебираются все варианты первого 
+и второго.</font></p>
+<p><font size="2" face="Courier New">return a = [a]</font></p>
+<p><font size="2" face="Courier New">params &gt;&gt;= f = concat [f 
+x | x &lt;- params]</font></p>
+<p align="justify"><font size="2" face="Arial">Напомним типы 
+участвующих значений:</font></p>
+<ul type="DISC">
+  <li><font size="2" face="Courier New"><b>params :: [a]</b></font><font size="2" face="Arial"> - это список значений, или 
+  &quot;недетерминированное значение&quot;</font></li>
+  <li><font size="2" face="Courier New"><b>f :: a -&gt; [b]</b></font><font size="2" face="Arial"> - это &quot;недетерминированная&quot; 
+  функция, возвращающая список вариантов 
+  результата в зависимости от параметра.</font></li>
+</ul>
+<p align="justify"><font size="2" face="Arial">Таким образом,</font><font size="2" face="Courier New"><b> params 
+&gt;&gt;= f :: [b]</b></font><font size="2" face="Arial"> , как и 
+следовало ожидать - это список возможных 
+результатов применения функции ко всем 
+возможным аргументам.</font></p>
+<p align="justify"><font size="2" face="Arial">Например, </font><font size="2" face="Courier New"><b>[“c:/music”, 
+“c:/work”] &gt;&gt;= getDirectoryContents = [“c:/music/Bach”, 
+“c:/music/Beethoven”, “c:/music/Rammstein”, 
+“c:/work/projects”, “c:/work/documents”]</b></font> <br>
+</p>
+<p><font color="#01799F" size="3" face="Arial"><b>State (монада 
+вычислений с изменяемым 
+состоянием)</b></font></p>
+<p align="justify"><font size="2" face="Arial">Это монада посложнее, 
+и я ее не упоминал выше. Она соответствует 
+вычислению с состоянием, но с не настолько 
+глобальным, как в монаде </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial"> (где вычисления потенциально 
+могут изменять состояние всего внешнего 
+мира), и его нельзя получить в явной форме, 
+изменить в явной форме или запомнить). 
+В ней каждое вычисление, во-первых, что-то 
+возвращает, а во-вторых, изменяет состояние. 
+То есть, вычисление типа &quot;</font><font size="2" face="Courier New"><b>a</b></font><font size="2" face="Arial">&quot; с состоянием типа &quot;</font><font size="2" face="Courier New"><b>s</b></font><font size="2" face="Arial">&quot; 
+имеет тип </font><font size="2" face="Courier New"><b>s -&gt; 
+(a, s)</b></font><font size="2" face="Arial">. Так и есть: </font><font size="2" face="Courier New"><b>newtype State s a = State { runState 
+:: s -&gt; (a, s) }</b></font><font size="2" face="Arial">  (лучше 
+было бы назвать </font><font size="2" face="Courier New"><b>StatefulComputation</b></font><font size="2" face="Arial">, но это длинновато)</font></p>
+<p align="justify"><font size="2" face="Arial">Рассмотрим, 
+например, программу, реализующую метод 
+Монте-Карло. Для этого ей понадобится 
+датчик случайных чисел, обладающий состоянием. 
+Тогда для этой программы «</font><font size="2" face="Courier New"><b>a</b></font><font size="2" face="Arial">» будет соответствовать 
+типу результата – например, числу успешных 
+экспериментов – а «</font><font size="2" face="Courier New"><b>s</b></font><font size="2" face="Arial">» будет представлять внутреннее 
+состояние датчика случайных чисел. Эта 
+программа будет использовать функцию 
+«сгенерировать случайное число», которая 
+будет возвращать новое случайное число 
+и изменять состояние датчика:</font></p>
+<p><font size="2" face="Courier New">rand :: State RndGen Int</font></p>
+<p><font size="2" face="Courier New">rand = ... -- Пока опустим 
+реализацию rand. Она будет показана чуть 
+ниже.</font> <br></p>
+<p><font size="2" face="Courier New">monteCarlo :: (Int -&gt; Bool) 
+-&gt; Int -&gt; State RndGen Int</font></p>
+<p><font size="2" face="Courier New">monteCarlo experiment 0 = return 
+0</font></p>
+<p><font size="2" face="Courier New">monteCarlo experiment n = rand 
+&gt;&gt;= \r -&gt; </font></p>
+<p><font size="2" face="Courier New">                          
+if (experiment r) then </font></p>
+<p><font size="2" face="Courier New">                              
+monteCarlo experiment (n-1) &gt;&gt;= \s -&gt; </font></p>
+<p><font size="2" face="Courier New">                              
+return (s+1)</font></p>
+<p><font size="2" face="Courier New">                          
+else</font></p>
+<p><font size="2" face="Courier New">                              
+monteCarlo experiment (n-1)</font></p>
+<p align="justify"><font size="2" face="Arial">Заметим, что 
+в коде </font><font size="2" face="Courier New"><b>monteCarlo</b></font><font size="2" face="Arial"> нет никаких намеков на присваивания 
+и изменение состояния – код написан в 
+чисто функциональном стиле, и всю «подноготную» 
+скрывает в себе монада </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial"> и функция </font><font size="2" face="Courier New"><b>rand</b></font><font size="2" face="Arial">.</font></p>
+<p align="justify"><font size="2" face="Arial">Но как же реализовать </font><font size="2" face="Courier New"><b>rand</b></font><font size="2" face="Arial">? 
+Конечно, можно реализовать его «влоб» 
+- например, так:</font></p>
+<p><font size="2" face="Courier New">rand :: State RndGen Int</font></p>
+<p><font size="2" face="Courier New">rand = State $ \(RndGen x) -&gt; 
+(x, RndGen ((x*1367823 + 918237) `mod` 32768))</font></p>
+<p align="justify"><font size="2" face="Arial">Однако более 
+естественным было бы в монаде </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial"> предоставить готовые функции 
+для чтения и изменения состояния; они 
+есть и называются соответственно </font><font size="2" face="Courier New"><b>get</b></font><font size="2" face="Arial"> 
+и </font><font size="2" face="Courier New"><b>put</b></font><font size="2" face="Arial">:</font></p>
+<p><font size="2" face="Courier New">rand = get &gt;&gt;= \(RndGen x) 
+-&gt;</font></p>
+<p><font size="2" face="Courier New">       
+put $ RndGen ((x*1367823 + 918237) `mod` 32768) &gt;&gt;= </font></p>
+<p><font size="2" face="Courier New">       
+return x</font></p>
+<p align="justify"><font size="2" face="Arial">Этот код несколько 
+длиннее, однако он не выглядит мистической 
+лямбда-абстракцией, а очевидным образом 
+манипулирует состоянием.</font></p>
+<p align="justify"><font size="2" face="Arial">Функции </font><font size="2" face="Courier New"><b>get</b></font><font size="2" face="Arial"> 
+и </font><font size="2" face="Courier New"><b>put</b></font><font size="2" face="Arial"> 
+не являются какими-то «хаками» - они реализованы 
+довольно-таки тривиально, но все же стоит 
+приглядеться к ним.</font></p>
+<p><font size="2" face="Courier New">get :: State s s</font></p>
+<p><font size="2" face="Courier New">get = State $ \s -&gt; (s, s)</font> <br>
+</p>
+<p><font size="2" face="Courier New">put :: s -&gt; State s ()</font></p>
+<p><font size="2" face="Courier New">put s&#39; = State $ \s -&gt; ((), 
+s’)</font></p>
+<p align="justify"><font size="2" face="Arial">Получается, 
+что </font><font size="2" face="Courier New"><b>get</b></font><font size="2" face="Arial"> – это «вычисление с изменяемым 
+состоянием, возвращающее само состояние», 
+а </font><font size="2" face="Courier New"><b>put</b></font><font size="2" face="Arial"> 
+– это «вычисление с изменяемым состоянием, 
+не возвращающее ничего, зато изменяющее 
+состояние». Теперь реализация самой монады </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial">:</font></p>
+<p><font size="2" face="Courier New">instance Monad (State s) where</font></p>
+<p><font size="2" face="Courier New">    return a = State 
+dontChangeStateAndReturnA</font></p>
+<p><font size="2" face="Courier New">        
+where dontChangeStateAndReturnA s = (a, s)</font> <br></p>
+<p><font size="2" face="Courier New">    -- r1 :: State 
+s a = State (s -&gt; (a, s)) - это вычисление с состоянием</font></p>
+<p><font size="2" face="Courier New">    -- p :: a -&gt; 
+State s b = a -&gt; State (s -&gt; (b, s)) - это вычисление 
+с состоянием, зависящее от параметра, 
+вычисляемого r1.</font></p>
+<p><font size="2" face="Courier New">    (State r1) &gt;&gt;= 
+p = State passState</font></p>
+<p><font size="2" face="Courier New">        
+where passState s = (res2, finalState)</font></p>
+<p><font size="2" face="Courier New">                
+where (res1, intermediateState) = r1 s          
+-- Запускаем первое вычисление, получаем 
+параметр</font></p>
+<p><font size="2" face="Courier New">                      
+(State r2) = p res1                       
+-- Вычисляем по параметру второе вычисление</font></p>
+<p><font size="2" face="Courier New">                      
+(res2, finalState) = r2 intermediateState -- Запускаем второе 
+вычисление</font></p>
+<p align="justify"><font size="2" face="Arial">Без конструктора </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial"> 
+путаница уменьшится (зато будет неправильно):</font></p>
+<p><font size="2" face="Courier New">r1 &gt;&gt;= p = passState</font></p>
+<p><font size="2" face="Courier New">    where passState 
+s = (res2, finalState)</font></p>
+<p><font size="2" face="Courier New">            
+where (res1, intermediateState) = r1 s                
+-- Запускаем первое вычисление, получаем 
+параметр</font></p>
+<p><font size="2" face="Courier New">                  
+(res2, finalState) = (p res1) intermediateState -- Вычисляем 
+и запускаем второе вычисление</font> <br>
+ <br></p>
+<p><font color="#01799F" size="3" face="Arial"><b>Прочие</b></font></p>
+<p align="justify"><font size="2" face="Arial">В стандартной 
+библиотеке Хаскелла определены еще несколько 
+монад – </font><font size="2" face="Courier New"><b>Reader</b></font><font size="2" face="Arial">, </font><font size="2" face="Courier New"><b>Writer</b></font><font size="2" face="Arial">, </font><font size="2" face="Courier New"><b>Cont</b></font><font size="2" face="Arial">. </font></p>
+<p align="justify"><font size="2" face="Arial">Рекомендуется 
+ознакомиться с ними самостоятельно: </font><font size="2" face="Courier New"><b>Reader</b></font><font size="2" face="Arial"> 
+и </font><font size="2" face="Courier New"><b>Writer</b></font><font size="2" face="Arial"> концептуально просты и довольно 
+часто применяются; </font><font size="2" face="Courier New"><b>Cont</b></font><font size="2" face="Arial"> – сложная монада, предназначенная 
+для программирования в «стиле передачи 
+продолжений» (continuation-passing style). Обсуждение 
+ее выходит за рамки этой статьи.</font></p>
+<p><font color="#01799F" size="5" face="Arial"><b>do-синтаксис</b></font></p>
+<p align="justify"><font size="2" face="Arial">Рассмотрим 
+снова пример с многозначными функциями 
+(монада </font><font size="2" face="Courier New"><b>List</b></font><font size="2" face="Arial">):</font></p>
+<p><font size="2" face="Courier New">Shop s = getShops() ;*</font></p>
+<p><font size="2" face="Courier New">Department d = getDepartments(s) 
+;*</font></p>
+<p><font size="2" face="Courier New">Order ord = getOrders(d) ;*</font></p>
+<p><font size="2" face="Courier New">sum += ord.getCost();</font></p>
+<p align="justify"><font size="2" face="Arial">Перепишем его 
+на Хаскелле: </font></p>
+<p><font size="2" face="Courier New">let s = getShops</font></p>
+<p><font size="2" face="Courier New">    d = getDepartments 
+s</font></p>
+<p><font size="2" face="Courier New">    ord = getOrders 
+d</font></p>
+<p><font size="2" face="Courier New">in</font></p>
+<p><font size="2" face="Courier New">    sum (getCost 
+ord)</font></p>
+<p align="justify"><font size="2" face="Arial">Этот код, конечно 
+же, неверен – он не проходит проверку 
+типов. Ведь </font><font size="2" face="Courier New"><b>s</b></font><font size="2" face="Arial"> имеет тип </font><font size="2" face="Courier New"><b>[Shop]</b></font><font size="2" face="Arial">, поэтому </font><font size="2" face="Courier New"><b>getDepartments</b></font><font size="2" face="Arial"> неприменим к </font><font size="2" face="Courier New"><b>s</b></font><font size="2" face="Arial">. Аналогично для </font><font size="2" face="Courier New"><b>d</b></font><font size="2" face="Arial">/</font><font size="2" face="Courier New"><b>getOrders</b></font><font size="2" face="Arial"> и </font><font size="2" face="Courier New"><b>ord</b></font><font size="2" face="Arial">/</font><font size="2" face="Courier New"><b>getCost</b></font><font size="2" face="Arial">. Дело в том, что вышеприведенный 
+код с оператором ;* нельзя воспринимать 
+буквально: В записи</font></p>
+<p><font size="2" face="Courier New">Shop s = getShops() ;*</font></p>
+<p align="justify"><font size="2" face="Arial">имелось в виду, 
+что </font><font size="2" face="Courier New"><b>s</b></font><font size="2" face="Arial"> – это параметр, используемый 
+оставшейся частью вычисления. Поэтому 
+данная запись означает не «Пусть </font><font size="2" face="Courier New"><b>s</b></font><font size="2" face="Arial"> 
+равно </font><font size="2" face="Courier New"><b>getShops</b></font><font size="2" face="Arial">», а «Пусть параметр </font><font size="2" face="Courier New"><b>s</b></font><font size="2" face="Arial"> 
+вычисляется с помощью </font><font size="2" face="Courier New"><b>getShops</b></font><font size="2" face="Arial">». Результаты этого вычисления 
+будут использованы оператором ;* , который 
+имеет в монаде </font><font size="2" face="Courier New"><b>List</b></font><font size="2" face="Arial"> тип </font><font size="2" face="Courier New"><b>[a] 
+-&gt; (a -&gt; [b]) -&gt; [b]</b></font><font size="2" face="Arial">, 
+а в частном случае, когда </font><font size="2" face="Courier New"><b>a 
+= Shop</b></font><font size="2" face="Arial"> – </font><font size="2" face="Courier New"><b>[Shop] 
+-&gt; (Shop -&gt; [b]) -&gt; [b]</b></font><font size="2" face="Arial">. 
+То есть, </font><font size="2" face="Courier New"><b>s</b></font><font size="2" face="Arial"> имеет тип </font><font size="2" face="Courier New"><b>[Shop]</b></font><font size="2" face="Arial">, а остаток вычисления зависит 
+от </font><font size="2" face="Courier New"><b>Shop</b></font><font size="2" face="Arial">. С учетом этой идеи можно 
+переписать первый фрагмент кода так:</font></p>
+<p><font size="2" face="Courier New">getShops() &gt;&gt;= \s -&gt;</font></p>
+<p><font size="2" face="Courier New">getDepartments(s) &gt;&gt;= \d 
+-&gt;</font></p>
+<p><font size="2" face="Courier New">getOrders(d) &gt;&gt;= \ord -&gt;</font></p>
+<p><font size="2" face="Courier New">sum += ord.getCost();</font></p>
+<p align="justify"><font size="2" face="Arial">А на Хаскелле 
+– вот так:</font></p>
+<p><font size="2" face="Courier New">sum (getShops &gt;&gt;= \s -&gt;</font></p>
+<p><font size="2" face="Courier New">     getDepartments 
+s &gt;&gt;= \d -&gt;</font></p>
+<p><font size="2" face="Courier New">     getOrders 
+d &gt;&gt;= \ord -&gt;</font></p>
+<p><font size="2" face="Courier New">     return 
+(getCost ord))</font></p>
+<p align="justify"><font size="2" face="Arial">Очевидно, такой 
+разновидности «присваивания» соответствует 
+синтаксическая идиома </font><font size="2" face="Courier New"><b>value 
+&gt;&gt;= \variable -&gt; …</b></font><font size="2" face="Arial">. 
+В Хаскелле есть на этот случай синтаксический 
+сахар, называемый <i>do-синтаксисом</i>:</font></p>
+<p><font size="2" face="Courier New">sum (do s &lt;- getShops</font></p>
+<p>   <font size="2" face="Courier New">    
+d &lt;- getDepartments s</font></p>
+<p><font size="2" face="Courier New">        
+ord &lt;- getOrders d</font></p>
+<p><font size="2" face="Courier New">        
+return (getCost ord))</font></p>
+<p align="justify"><font size="2" face="Arial">Эта запись транслируется 
+компилятором в точности в вышеуказанный 
+код. Такой способ оформления делает код 
+более похожим на императивный; еще больше 
+это чувствуется при использовании монады </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial">:</font></p>
+<p><font size="2" face="Courier New">main = do putStrLn “Input a number”</font></p>
+<p><font size="2" face="Courier New">          
+a &lt;- readNumber</font></p>
+<p>   <font size="2" face="Courier New">      
+putStrLn “Input another number”</font></p>
+<p><font size="2" face="Courier New">          
+b &lt;- readNumber</font></p>
+<p><font size="2" face="Courier New">          
+putStrLn $ “Their sum is: ” ++ show (a + b)</font></p>
+<p align="justify"><font size="2" face="Arial">Последовательное 
+указание в do-синтаксисе двух строчек, 
+первая из которых не является связыванием 
+вида </font><font size="2" face="Courier New"><b>a &lt;- 
+…,</b></font><font size="2" face="Arial"> транслируется 
+так, как будто написано не </font><font size="2" face="Courier New"><b>putStrLn 
+“Input a number”,</b></font><font size="2" face="Arial"><i> </i>
+а </font><font size="2" face="Courier New"><b>_ &lt;- 
+putStrLn “Input a number”</b></font><font size="2" face="Arial"> 
+– т.е. действие выполняется, но возвращенное 
+им значение никак не используется.</font></p>
+<p align="justify"><font size="2" face="Arial">Действия, чье 
+возвращаемое значение неважно, из рассмотренных 
+нами монад есть лишь в монаде </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial"> (действия с побочными эффектами) 
+и в монаде </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial"> (действия, которые изменяют 
+состояние – мы рассматривали только 
+одно такое примитивное действие – </font><font size="2" face="Courier New"><b>put</b></font><font size="2" face="Arial"> 
+– однако любая функция, использующая </font><font size="2" face="Courier New"><b>put</b></font><font size="2" face="Arial">, 
+также, очевидно, обладает эффектом). Несколько 
+позже мы вернемся к рассмотрению таких 
+действий и монад.</font></p>
+<p align="justify"><font size="2" face="Arial">Вот во что транслируется 
+вышеприведенный код:</font></p>
+<p><font size="2" face="Courier New">main = putStrLn “Input a number” 
+&gt;&gt;= \_ -&gt;</font></p>
+<p><font size="2" face="Courier New">       
+readNumber &gt;&gt;= \a -&gt;</font></p>
+<p>   <font size="2" face="Courier New">   
+putStrLn “Input another number” &gt;&gt;= \_ -&gt;</font></p>
+<p><font size="2" face="Courier New">       
+readNumber &gt;&gt;= \b -&gt;</font></p>
+<p><font size="2" face="Courier New">       
+putStrLn $ “Their sum is: ” ++ show (a + b)</font> <br></p>
+<p><font color="#01799F" size="5" face="Arial"><b>Проектирование 
+монад</b></font></p>
+<p align="justify"><font size="2" face="Arial">Три вышеприведенных 
+монады, безусловно, имеют практическое 
+значение и хорошо иллюстрируют саму идею 
+монад – однако если бы применение монад 
+ими исчерпывалось, то их нельзя было бы 
+назвать такими уж <i>полезными </i>
+и <i>интересными</i>, а эти примеры можно 
+было бы реализовать и как-нибудь по-другому. 
+Настоящая мощь монад раскрывается тогда, 
+когда неожиданно выясняется, что какая-то 
+предметная область хорошо выражается 
+в их терминах. Сейчас мы рассмотрим два 
+таких примера.</font> <br></p>
+<p><font color="#01799F" size="3" face="Arial"><b>Синтаксический 
+разбор</b></font></p>
+<p align="justify"><font size="2" face="Arial">Спроектируем 
+библиотеку для построения парсеров. Пусть 
+парсер будет параметризован типом значения, 
+которое он возвращает. Например, парсер, 
+парсящий число – будет возвращать число, 
+а парсер для кода – его синтаксное дерево. 
+Тип парсера будет примерно таким: </font><font size="2" face="Courier New"><b>type 
+Parser a = String -&gt; Maybe a</b></font><font size="2" face="Arial">  
+- Maybe, поскольку может оказаться, что входную 
+строку нельзя распарсить. Например, парсер 
+чисел вернет </font><font size="2" face="Courier New"><b>Nothing</b></font><font size="2" face="Arial"> на строке «Hello». </font></p>
+<p align="justify"><font size="2" face="Arial">С таким типом 
+нетрудно написать несколько простых 
+«примитивных» парсеров, например:</font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">парсер для чисел</font></li>
+  <li><font size="2" face="Arial">парсер, всегда 
+  возвращающий одно конкретное значение</font></li>
+  <li><font size="2" face="Arial">парсер, всегда 
+  возвращающий входную строку</font></li>
+  <li><font size="2" face="Arial">парсер, всегда 
+  ничего не возвращающий (отвергающий любую 
+  строку) </font></li>
+  <li><font size="2" face="Arial">парсер, «ожидающий» 
+  некоторую фиксированную строку, возвращающий </font><font size="2" face="Courier New"><b>()</b></font><font size="2" face="Arial"> 
+  если она найдена, и </font><font size="2" face="Courier New"><b>Nothing</b></font><font size="2" face="Arial"> в противном случае.</font></li>
+</ul>
+<p align="justify"><font size="2" face="Arial">Можно также 
+реализовать комбинатор «</font><font size="2" face="Courier New"><b>&lt;|&gt;</b></font><font size="2" face="Arial">» - параллельная композиция 
+парсеров: он пробует применить первый 
+парсер, и – если не получилось – применяет 
+второй.</font></p>
+<p><font size="2" face="Courier New">(&lt;|&gt;) :: Parser a -&gt; Parser 
+a -&gt; Parser a</font></p>
+<p><font size="2" face="Courier New">a &lt;|&gt; b = \s -&gt; case (a 
+s) of </font></p>
+<p><font size="2" face="Courier New">                    
+Just v  -&gt; Just v</font></p>
+<p><font size="2" face="Courier New">                    
+Nothing -&gt; b s</font></p>
+<p align="justify"><font size="2" face="Arial">Однако последовательную 
+композицию парсеров (</font><font size="2" face="Courier New"><b>&lt;*&gt;</b></font><font size="2" face="Arial">) – например, парсер для <i>
+двух</i> чисел (“123 456” -&gt; (123, 456)) – таким 
+образом уже нельзя построить эффективно: 
+в самом деле, поскольку о реализации этих 
+двух парсеров комбинатору ничего не известно, 
+то он будет вынужден перебирать все возможные 
+разбиения входной строки на две, и для 
+левой части вызывать первый парсер, а 
+для правой – второй. Это ужасающе неэффективно, 
+а когда парсеров становится несколько, 
+то сложность становится экспоненциальной 
+от длины строки и числа парсеров.</font></p>
+<p align="justify"><font size="2" face="Arial">На самом деле, 
+последовательную композицию хотелось 
+бы реализовать так: пусть первый парсер 
+«съест» от строки, сколько сможет, а то, 
+что осталось – скормим второму парсеру. 
+Тогда в тип парсера надо добавить тот 
+факт, что он возвращает также и «несъеденную» 
+порцию строки: </font><font size="2" face="Courier New"><b>type 
+Parser a = String -&gt; Maybe (a, String)</b></font><font size="2" face="Arial">. 
+Теперь последовательная композиция легко 
+реализуется:</font></p>
+<p><font size="2" face="Courier New">(&lt;*&gt;) :: Parser a -&gt; Parser 
+b -&gt; Parser (a,b)</font></p>
+<p><font size="2" face="Courier New">a &lt;*&gt; b = \s -&gt; do</font></p>
+<p><font size="2" face="Courier New">    (va, s’) &lt;- 
+a s</font></p>
+<p><font size="2" face="Courier New">    (vb, s’’) 
+&lt;- b s’</font></p>
+<p><font size="2" face="Courier New">    return (va,vb)</font></p>
+<p align="justify"><font size="2" face="Arial">В этом фрагменте 
+кода используется монада </font><font size="2" face="Courier New"><b>Maybe</b></font><font size="2" face="Arial"> и </font><font size="2" face="Courier New"><b>do</b></font><font size="2" face="Arial">-синтаксис; для закрепления 
+материала приведем еще два варианта с 
+точно такой же семантикой: </font></p>
+<p align="justify"><font size="2" face="Arial">Первый вариант 
+– во что раскрывается компилятором вышеприведенный 
+код:</font></p>
+<p><font size="2" face="Courier New">a &lt;*&gt; b = \s -&gt;</font></p>
+<p><font size="2" face="Courier New">    (a s)  
+&gt;&gt;= \(va, s’)  -&gt;</font></p>
+<p><font size="2" face="Courier New">    (b s’) &gt;&gt;= 
+\(vb, s’’) -&gt;</font></p>
+<p><font size="2" face="Courier New">    return (va,vb)</font></p>
+<p align="justify"><font size="2" face="Arial">Второй вариант, 
+вообще не использующий <i>монаду</i> </font><font size="2" face="Courier New"><b>Maybe</b></font><font size="2" face="Arial"> 
+– в это раскрывается первый вариант, 
+если раскрыть функции </font><font size="2" face="Courier New"><b>(&gt;&gt;=)</b></font><font size="2" face="Arial"> и </font><font size="2" face="Courier New"><b>return</b></font><font size="2" face="Arial">:</font></p>
+<p><font size="2" face="Courier New">a &lt;*&gt; b = \s -&gt; </font></p>
+<p><font size="2" face="Courier New">    case (a s) of</font></p>
+<p><font size="2" face="Courier New">        
+Nothing -&gt; Nothing</font></p>
+<p><font size="2" face="Courier New">        
+Just (va,s’) -&gt; </font></p>
+<p><font size="2" face="Courier New">            
+case (b s’) of</font></p>
+<p><font size="2" face="Courier New">                
+Nothing -&gt; Nothing</font></p>
+<p><font size="2" face="Courier New">                
+Just (vb, s’’) -&gt; Just ((va,vb), s’’)</font></p>
+<p><font size="2" face="Courier New">                </font> <br>
+</p>
+<p align="justify"><font size="2" face="Arial">Итак, с типом </font><font size="2" face="Courier New"><b>type Parser a = String -&gt; Maybe (a, 
+String)</b></font><font size="2" face="Arial"> легко реализовать 
+последовательную композицию парсеров 
+и (оставляется в качестве упражнения 
+читателю) также легко реализовать и параллельную 
+композицию.</font></p>
+<p align="justify"><font size="2" face="Arial">Теперь рассмотрим 
+еще пару важных комбинаторов: комбинатор 
+«</font><font size="2" face="Courier New"><b>oneOrMore :: 
+Parser a -&gt; Parser [a]</b></font><font size="2" face="Arial">». 
+Он пригодится, например, для разбора строк 
+следующего вида:</font></p>
+<p><font size="2" face="Courier New">Napoleon 1769|Emperor of France</font></p>
+<p><font size="2" face="Courier New">Henry the 8 th 1491|King of England, 
+had 6 wives</font></p>
+<p align="justify"><font size="2" face="Arial">Распознающий 
+(не возвращающий значения) парсер для 
+таких строк можно реализовать как </font><font size="2" face="Courier New"><b>kingInfo = (oneOrMore 
+anyChar) &lt;*&gt; space &lt;*&gt; (oneOrMore digit) &lt;*&gt; 
+char ‘|’ &lt;*&gt; (oneOrMore anyChar)</b></font><font size="2" face="Arial">.</font></p>
+<p align="justify"><font size="2" face="Arial">Попробуем придумать 
+реализацию </font><font size="2" face="Courier New"><b>oneOrMore </b></font><font size="2" face="Arial">: </font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">первый вариант 
+  – «жадный», </font><font size="2" face="Courier New"><b>oneOrMore 
+  p</b></font><font size="2" face="Arial"> применяет парсер </font><font size="2" face="Courier New"><b>p</b></font><font size="2" face="Arial">, 
+  пока это возможно. Очевидно, что на этом 
+  примере такой вариант не сработает – 
+  поскольку в таком случае первый же </font><font size="2" face="Courier New"><b>oneOrMore</b></font><font size="2" face="Arial"> </font><font size="2" face="Courier New"><b>anyChar</b></font><font size="2" face="Arial"> 
+  «съест» всю строку. </font></li>
+  <li><font size="2" face="Arial">второй вариант 
+  – «недетерминированный», </font><font size="2" face="Courier New"><b>(oneOrMore 
+  p1) &lt;*&gt; p2</b></font><font size="2" face="Arial"> должно 
+  найти способ разбить входную строку на 
+  две, где первая разбирается несколькими 
+  применениями </font><font size="2" face="Courier New"><b>p1</b></font><font size="2" face="Arial">, а вторая – парсером </font><font size="2" face="Courier New"><b>p2</b></font><font size="2" face="Arial">. </font></li>
+</ul>
+<p align="justify"><font size="2" face="Arial">Нам подходит 
+только второй вариант. Самый простой 
+(а возможно, и единственный) способ его 
+реализовать – от типа </font><font size="2" face="Courier New"><b>Maybe</b></font><font size="2" face="Arial"> перейти к типу списков. Этот 
+принцип Philip Wadler сформулировал как «Replace 
+failure by a list of successes» в своей работе [C.1]. Теперь 
+парсер будет иметь тип </font><font size="2" face="Courier New"><b>type 
+Parser a = String -&gt; [(a, String)]</b></font><font size="2" face="Arial">. 
+Реализации операций при этом станут еще 
+проще, а реализация </font><font size="2" face="Courier New"><b>&lt;*&gt;</b></font><font size="2" face="Arial"> с использованием do-синтаксиса, 
+как легко убедиться, не изменится вообще! </font></p>
+<p align="justify"><font size="2" face="Arial">Попробуем теперь 
+реализовать </font><font size="2" face="Courier New"><b>kingInfo </b></font><font size="2" face="Arial">как следует, возвращая тип 
+King: </font><font size="2" face="Courier New"><b>data 
+King = King {name::String, birth::Int, 
+info::String}</b></font><font size="2" face="Arial">:</font></p>
+<p><font size="2" face="Courier New">kingInfo = \s -&gt; do</font></p>
+<p><font size="2" face="Courier New">    (name, s1) &lt;- 
+oneOrMore anyChar s</font></p>
+<p><font size="2" face="Courier New">    (_, s2) &lt;- 
+space s1</font></p>
+<p><font size="2" face="Courier New">    (birthStr, s3) 
+&lt;- oneOrMore digit s2</font></p>
+<p><font size="2" face="Courier New">    (_, s4) &lt;- 
+char ‘|’ s3</font></p>
+<p><font size="2" face="Courier New">    (info, s5) &lt;- 
+oneOrMore anyChar s4</font></p>
+<p><font size="2" face="Courier New">    return (King 
+name (read birthStr) info, s5)</font></p>
+<p align="justify"><font size="2" face="Arial">Становится 
+видно наличие связи между вычислениями, 
+не учтенной в монаде </font><font size="2" face="Courier New"><b>List</b></font><font size="2" face="Arial">; похоже, стоит написать свою 
+собственную монаду! Она будет похожа 
+на монаду </font><font size="2" face="Courier New"><b>List</b></font><font size="2" face="Arial">, но будет вместе с полученными 
+значениями хранить и остаток строки, 
+из которой значения были прочитаны – 
+похоже на смесь </font><font size="2" face="Courier New"><b>List</b></font><font size="2" face="Arial"> и </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial">:</font></p>
+<p><font size="2" face="Courier New">newtype Parser a = Parser {runParser 
+:: String -&gt; [(a,String)]}</font></p>
+<p><font size="2" face="Courier New">instance Monad Parser where</font></p>
+<p><font size="2" face="Courier New">    return a  = 
+Parser $ \s -&gt; [(a,s)]</font></p>
+<p><font size="2" face="Courier New">    pa &gt;&gt;= 
+pb = Parser $ \s -&gt; [(b,s’’) | (a,s’) &lt;- pa s, (b,s’’) 
+&lt;- pb s’]</font></p>
+<p align="justify"><font size="2" face="Arial">Все примитивные 
+парсеры и их комбинаторы в процессе перехода 
+от </font><font size="2" face="Courier New"><b>Maybe</b></font><font size="2" face="Arial"> к использованию списков 
+подвергаются тривиальным изменениям 
+(например, </font><font size="2" face="Courier New"><b>&lt;*&gt;</b></font><font size="2" face="Arial"> теперь выглядит как </font></p>
+<p><font size="2" face="Courier New">(Parser p) &lt;*&gt; (Parser q) 
+= Parser r</font></p>
+<p><font size="2" face="Courier New">    where r s = 
+concat [((vp,vq), s’’) | (vp,s’) &lt;- p s, (vq, s’’) &lt;- 
+q s’]</font></p>
+<p align="justify"><font size="2" face="Arial">А «королевский» 
+пример можно теперь переписать так:</font></p>
+<p><font size="2" face="Courier New">kingInfo = do</font></p>
+<p><font size="2" face="Courier New">    name &lt;- oneOrMore 
+anyChar</font></p>
+<p><font size="2" face="Courier New">    space</font></p>
+<p><font size="2" face="Courier New">    birthStr &lt;- 
+oneOrMore digit</font></p>
+<p><font size="2" face="Courier New">    char ‘|’</font></p>
+<p><font size="2" face="Courier New">    info &lt;- oneOrMore 
+anyChar</font></p>
+<p><font size="2" face="Courier New">    return (King 
+name (read birthStr) info)</font></p>
+<p align="justify"><font size="2" face="Arial">Теперь объявление 
+парсера выглядит в точности как грамматика 
+в форме Бэкуса-Наура; и добились мы этого, 
+используя «монадическую» сущность ФБН 
+и процесса синтаксического разбора. Очень 
+важно заметить в задаче «монадную структуру» 
+– обычно, если это удается сделать, то 
+получается столь же ясный и красивый 
+код, как в этом примере. Похожий подход 
+к разбору используется в библиотеке парсеров 
+Parsec, а идея именно этого подхода взята 
+из работы [C.3].</font> <br></p>
+<p><font color="#01799F" size="3" face="Arial"><b>Статистические 
+распределения</b></font></p>
+<p align="justify"><font size="2" face="Arial">Теперь займемся 
+моделированием случайных процессов. 
+Смоделируем, например, поведение трех 
+типов водителей на светофоре и вероятность 
+их столкновения (пример взят из книги 
+[D.1]):</font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">Есть три типа водителей: 
+  осторожный, нормальный и агрессивный</font></li>
+  <li><font size="2" face="Arial">У светофора есть 
+  3 положения: желтый, зеленый, красный</font></li>
+  <li><font size="2" face="Arial">Если два «перпендикулярных» 
+  водителя на перекрестке газуют одновременно, 
+  то они сталкиваются с вероятностью 0.3</font></li>
+  <li><font size="2" face="Arial">Водитель с вероятностью 
+  0.2 является осторожным, с вероятностью 
+  0.6 нормальным, и с вероятностью 0.2 агрессивным</font></li>
+  <li><font size="2" face="Arial">Имеет место следующая 
+  таблица, где каждая ячейка означает «<i>такой</i> 
+  тип водителя газует на <i>такой</i> свет 
+  с <i>такой</i> вероятностью»</font></li>
+</ul>
+<a name="0.1_table01"></a>
+<div align="left">
+<ul><table width="0" border="2" cellspacing="0">
+<tr valign="top"><td width="24%"><font size="2" face="Arial"> </font></td>
+  <td width="25%"><font size="2" face="Arial">Осторожный</font></td>
+  <td width="25%"><font size="2" face="Arial">Нормальный</font></td>
+  <td width="25%"><font size="2" face="Arial">Агрессивный</font></td></tr>
+<tr valign="top"><td><font size="2" face="Arial">Зеленый</font></td>
+  <td><font size="2" face="Arial">1</font></td>
+  <td><font size="2" face="Arial">1</font></td>
+  <td><font size="2" face="Arial">1</font></td></tr>
+<tr valign="top"><td><font size="2" face="Arial">Желтый</font></td>
+  <td><font size="2" face="Arial">0.1</font></td>
+  <td><font size="2" face="Arial">0.2</font></td>
+  <td><font size="2" face="Arial">0.9</font></td></tr>
+<tr valign="top"><td><font size="2" face="Arial">Красный</font></td>
+  <td><font size="2" face="Arial">0</font></td>
+  <td><font size="2" face="Arial">0.1</font></td>
+  <td><font size="2" face="Arial">0.3</font></td></tr>
+</table>
+</ul>
+</div>
+<p align="justify"><font size="2" face="Arial">Требуется выяснить 
+вероятность столкновения для двух данных 
+типов водителей, и в среднем по всем типам.</font> <br>
+</p>
+<p align="justify"><font size="2" face="Arial">На минутку забудем 
+о наличии вероятностей – точнее, о том, 
+что все переменные в этой задаче – «нечеткие», 
+вероятностные. Тогда задача превращается 
+в тривиальную детерминированную процедуру:</font></p>
+<p><font size="2" face="Courier New">bool collide(Driver first, Driver 
+second, Light light) {</font></p>
+<p><font size="2" face="Courier New">    Action firstAction 
+= first.actionOn(light);</font></p>
+<p><font size="2" face="Courier New">    Action secondAction 
+= second.actionOn(light);</font></p>
+<p><font size="2" face="Courier New">    bool result 
+= doActionsLeadToCollision<WBR>(firstAction, secondAction);</font></p>
+<p><font size="2" face="Courier New">    return result;</font></p>
+<p><font size="2" face="Courier New">}</font></p>
+<p align="justify"><font size="2" face="Arial">В общем-то, все, 
+что надо сделать, чтобы из этой простой 
+процедуры получить то, что нам нужно (вероятность 
+столкновения), надо заменить все типы </font><font size="2" face="Courier New"><b>T</b></font><font size="2" face="Arial"> 
+на «распределение по </font><font size="2" face="Courier New"><b>T</b></font><font size="2" face="Arial">» - например, вместо «</font><font size="2" face="Courier New"><b>bool</b></font><font size="2" face="Arial">» 
+написать «распределение над </font><font size="2" face="Courier New"><b>bool</b></font><font size="2" face="Arial">», вместо «</font><font size="2" face="Courier New"><b>Driver</b></font><font size="2" face="Arial">» - «распределение над </font><font size="2" face="Courier New"><b>Driver</b></font><font size="2" face="Arial">» 
+и т.п. Тогда, если язык обеспечит нам арифметические 
+операции над такими типами, то задача 
+будет решена.</font></p>
+<p align="justify"><font size="2" face="Arial">Встает два вопроса: 
+1) Что такое «распределение над </font><font size="2" face="Courier New"><b>T</b></font><font size="2" face="Arial">» 
+и как его представить в программе, и 2) 
+Как реализовать операции над такими значениями.</font></p>
+<p align="justify"><font size="2" face="Arial">Ответ на первый 
+вопрос зависит от того, как мы будем этими 
+величинами пользоваться. Логично предположить, 
+что мы будем генерировать величины и 
+считать статистики от них. Для этого нам 
+понадобятся:</font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">Множество значений 
+  величины (ее <i>носитель</i>)</font></li>
+  <li><font size="2" face="Arial">Вероятности появления 
+  каждого значения (в дискретном случае) 
+  или функция распределения (в непрерывном 
+  случае)</font></li>
+  <li><font size="2" face="Arial">Способ сгенерировать 
+  величину с таким распределением</font></li>
+  <li><font size="2" face="Arial">Способ вычислить 
+  дисперсию или матожидание величины, или 
+  – в более общем случае – дисперсию или 
+  матожидание некоторой функции от величины.</font></li>
+</ul>
+<p align="justify"><font size="2" face="Arial">Однако дисперсия 
+выражается через матожидание: </font><font size="2" face="Courier New"><b>Dx = 
+M[(x-Mx)</b><sup><b>2</b></sup><b>]</b></font><font size="2" face="Arial">, 
+а также через него выражаются и вероятности 
+индивидуальных значений в конечном случае: </font><font size="2" face="Courier New"><b>P{x=x</b><sub><b>0</b></sub><b>} = 
+M[if(x==x</b><sub><b>0</b></sub><b>) 
+then 1 else 0]</b></font><font size="2" face="Arial">. В бесконечном 
+случае функция распределения нам, на 
+самом деле, не нужна. Действительно, для 
+чего она вообще может понадобиться? Обычно 
+ее интегрируют по интервалу, чтобы получить 
+вероятность попадания значения в заданный 
+интервал, однако и этот интеграл выражается 
+через матожидание: </font><font size="2" face="Courier New"><b>P{x</b><sub><b>0</b></sub><b> 
+&lt; x &lt; x</b><sub><b>1</b></sub><b>} = 
+M[if(x</b><sub><b>0</b></sub><b> &lt; 
+x &lt; x</b><sub><b>1</b></sub><b>) 
+then 1 else 0]</b></font><font size="2" face="Arial">. Конечно, 
+глупо говорить, что функция распределения 
+– бесполезная вещь; речь идет о том, что 
+для <i>практических вычислительных задач</i> 
+она, будучи заданной в явном виде, непригодна.</font></p>
+<p align="justify"><font size="2" face="Arial">В общем, похоже, 
+что нам хватит следующих трех «базисных» 
+свойств для описания распределения; все 
+остальные свойства выразятся через них.</font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">Носитель</font></li>
+  <li><font size="2" face="Arial">Генератор</font></li>
+  <li><font size="2" face="Arial">Вычислитель матожиданий</font></li>
+</ul>
+<p align="justify"><font size="2" face="Arial">Будем рассматривать 
+только дискретные распределения (с конечным 
+носителем), т.к. для общего случая бесконечных 
+распределений будет невозможно точно 
+реализовать функцию матожидания.</font></p>
+<ul><p><font size="2" face="Courier New">module Dist where</font> <br>
+</p></ul>
+<ul><p><font size="2" face="Courier New">import System.Random</font> <br>
+</p></ul>
+<ul><p><font size="2" face="Courier New">data Dist a = Dist {</font></p></ul>
+<ul><p><font size="2" face="Courier New">    support 
+:: [a],</font></p></ul>
+<ul><p><font size="2" face="Courier New">    gen :: StdGen 
+-&gt; (a, StdGen),</font></p></ul>
+<ul><p><font size="2" face="Courier New">    expect :: 
+(a -&gt; Float) -&gt; Float</font></p></ul>
+<ul><p><font size="2" face="Courier New">}</font></p></ul>
+<p align="justify"><font size="2" face="Arial">Займемся вторым 
+вопросом. Пусть нам надо сложить два «нечетких» 
+значения – целое </font><font size="2" face="Courier New"><b>a</b></font><font size="2" face="Arial"> и целое </font><font size="2" face="Courier New"><b>b</b></font><font size="2" face="Arial">. Распределение полученной 
+величины можно вычислить, рандомизируя 
+по параметру распределение величины </font><font size="2" face="Courier New"><b>a+b</b></font><font size="2" face="Arial">, 
+зависящее от параметра </font><font size="2" face="Courier New"><b>a</b></font><font size="2" face="Arial"> (рандомизацией величины 
+по параметру называется усреднение или 
+получение распределения этой величины 
+при случайном значении параметра). Сложение 
+можно обобщить до любой функции; число 
+аргументов функции также можно обобщить 
+до сколь угодно большого. Таким образом, 
+единственная необходимая операция для 
+вычисления составных распределений и 
+их характеристик, т.е. характеристик выражений 
+вида </font><font size="2" face="Courier New"><b>f(a</b><sub><b>1</b></sub><b>, 
+a</b><sub><b>2</b></sub><b>, a</b><sub><b>3</b></sub><b>, 
+…)</b></font><font size="2" face="Arial"> – это рандомизация. </font></p>
+<p align="justify"><font size="2" face="Arial">Оператор рандомизации 
+имеет тип: </font><font size="2" face="Courier New"><b>(распределение 
+параметра) -&gt; (распределение, 
+зависящее от параметра) -&gt; (рандомизированное 
+распределение)</b></font><font size="2" face="Arial">, 
+или – если записать тип «распределение 
+по </font><font size="2" face="Courier New"><b>a</b></font><font size="2" face="Arial">» 
+как «</font><font size="2" face="Courier New"><b>Dist a</b></font><font size="2" face="Arial">», то </font><font size="2" face="Courier New"><b>Dist 
+a -&gt; (a -&gt; Dist b) -&gt; Dist b</b></font><font size="2" face="Arial">. 
+Оп-па! Это ведь операция </font><font size="2" face="Courier New"><b>(&gt;&gt;=) 
+:: m a -&gt; (a -&gt; m b) -&gt; m b</b></font><font size="2" face="Arial">, 
+примененная к монаде </font><font size="2" face="Courier New"><b>Dist</b></font><font size="2" face="Arial">!</font></p>
+<p align="justify"><font size="2" face="Arial">Действительно, 
+статистические распределения образуют 
+монаду, в которой операцией связывания 
+является рандомизация. А </font><font size="2" face="Courier New"><b>return</b></font><font size="2" face="Arial">, очевидно, соответствует 
+дельта-распределению – то есть, такому, 
+при котором случайная величина может 
+принимать одно-единственное конкретное 
+значение с вероятностью 1:</font></p>
+<p><font size="2" face="Courier New">instance Monad Dist where</font></p>
+<p><font size="2" face="Courier New">    return a = Dist 
+{support = [a], gen = \g -&gt; (a, g), expect = \f -&gt; f a}</font></p>
+<p><font size="2" face="Courier New">    da &gt;&gt;= 
+fdb = Dist {</font></p>
+<p><font size="2" face="Courier New">        
+support = concat [support (fdb a) | a &lt;- support da],</font></p>
+<p><font size="2" face="Courier New">        
+gen = \g -&gt; let (a, g&#39;) = (gen da g)  in  (gen (fdb a) 
+g&#39;),</font></p>
+<p><font size="2" face="Courier New">        
+expect = \f -&gt; expect da (\a -&gt; expect (fdb a) f)</font></p>
+<p><font size="2" face="Courier New">    }</font></p>
+<p align="justify"><font size="2" face="Arial">Вот как работают 
+эти операции:</font></p>
+<ul><p align="justify"><font size="2" face="Courier New"><b> - 
+return a</b></font><font size="2" face="Arial"> возвращает 
+распределение, носитель которого состоит 
+из одного-единственного элемента – </font><font size="2" face="Courier New"><b>a</b></font><font size="2" face="Arial">, 
+генератор всегда генерирует </font><font size="2" face="Courier New"><b>a</b></font><font size="2" face="Arial">, а матожидание функции </font><font size="2" face="Courier New"><b>f</b></font><font size="2" face="Arial"> 
+равно значению </font><font size="2" face="Courier New"><b>f</b></font><font size="2" face="Arial"> на </font><font size="2" face="Courier New"><b>a</b></font></p></ul>
+<ul><p align="justify"><font size="2" face="Courier New"><b> - 
+(&gt;&gt;=) :: Dist a -&gt; (a -&gt; 
+Dist b) -&gt; Dist b</b></font><font size="2" face="Arial"> – тут </font><font size="2" face="Courier New"><b>da </b></font><font size="2" face="Arial">– 
+распределение параметра, а </font><font size="2" face="Courier New"><b>fdb</b></font><font size="2" face="Arial"> – функция, зависящая от 
+параметра, и возвращающая распределение </font><font size="2" face="Courier New"><b>db</b></font><font size="2" face="Arial">. 
+При рандомизации происходит следующее:</font></p></ul>
+<ul type="DISC">
+  <li><font size="2" face="Arial">Носитель «собирается» 
+  из носителей распределения </font><font size="2" face="Courier New"><b>db</b></font><font size="2" face="Arial"> при всех возможных значениях 
+  параметра – то есть, при значениях параметра 
+  из </font><font size="2" face="Courier New"><b>support da</b></font></li>
+  <li><font size="2" face="Arial">Генератор генерирует 
+  параметр, вычисляет распределение </font><font size="2" face="Courier New"><b>db</b></font><font size="2" face="Arial"> 
+  и генерирует с его помощью результат</font></li>
+  <li><font size="2" face="Arial">Матожидание использует 
+  формулу рандомизации: </font><font size="2" face="Courier New"><b>M</b><sub><b>a,b</b></sub><b>[f(a,b)] 
+  = M</b><sub><b>a</b></sub><b>[M</b><sub><b>b</b></sub><b>[f(a,b)]]</b></font></li>
+</ul>
+ <br>
+<p align="justify"><font size="2" face="Arial">Теперь мы можем 
+определить парочку простых распределений 
+и приступить к решению исходной задачи. 
+Для иллюстрации вполне хватит распределения </font><font size="2" face="Courier New"><b>freqs</b></font><font size="2" face="Arial">, 
+задаваемого парами (значение, вероятность), 
+которое, в свою очередь, можно выразить 
+через комбинатор </font><font size="2" face="Courier New"><b>choose</b></font><font size="2" face="Arial"> - «смесь двух заданных распределений 
+в пропорции </font><font size="2" face="Courier New"><b>p 
+: 1-p</b></font><font size="2" face="Arial">»:</font></p>
+<p><font size="2" face="Courier New">choose p d1 d2 = Dist {support 
+= s, gen = g, expect = e}</font></p>
+<p><font size="2" face="Courier New">    where</font></p>
+<p><font size="2" face="Courier New">      
+s = support d1 ++ support d2</font></p>
+<p><font size="2" face="Courier New">      
+g sg = let (x,sg&#39;) = randomR (0.0,1.0) sg in if x &lt; p then gen d1 
+sg&#39; else gen d2 sg&#39;</font></p>
+<p><font size="2" face="Courier New">      
+e f = p * expect d1 f + (1-p) * expect d2 f</font> <br></p>
+<p><font size="2" face="Courier New">prob p = choose p (return True) 
+(return False)</font> <br></p>
+<p><font size="2" face="Courier New">freqs [] = error &quot;Empty cases 
+list&quot;</font></p>
+<p><font size="2" face="Courier New">freqs [(_,a)] = return a</font></p>
+<p><font size="2" face="Courier New">freqs ((w,a):as) = choose w (return 
+a) (freqs as)</font> <br></p>
+<p><font size="2" face="Courier New">mean d = expect d id</font></p>
+<p><font size="2" face="Courier New">disp d = expect d (\x -&gt; (x-m)^2) 
+where m = mean d</font></p>
+<p><font size="2" face="Courier New">probability f d = expect d (\x 
+-&gt; if f x then 1 else 0)</font></p>
+<p align="justify"><font size="2" face="Arial">А теперь уже 
+можно решить исходную задачу.</font></p>
+<p><font size="2" face="Courier New">data Light = Red | Green | Yellow</font></p>
+<p><font size="2" face="Courier New">data Driver = Cautious | Normal 
+| Aggressive</font> <br></p>
+<p><font size="2" face="Courier New">data Action = Drive | DontDrive</font> <br>
+</p>
+<p><font size="2" face="Courier New">drive p = choose p (return Drive) 
+(return DontDrive)</font> <br></p>
+<p><font size="2" face="Courier New">_          
+`actOn` Green  = drive 1.0</font></p>
+<p><font size="2" face="Courier New">Cautious   `actOn` Yellow 
+= drive 0.1</font></p>
+<p><font size="2" face="Courier New">Normal     
+`actOn` Yellow = drive 0.2</font></p>
+<p><font size="2" face="Courier New">Aggressive `actOn` Yellow = drive 
+0.9</font></p>
+<p><font size="2" face="Courier New">Cautious   `actOn` Red    
+= drive 0.0</font></p>
+<p><font size="2" face="Courier New">Normal     
+`actOn` Red    = drive 0.1</font></p>
+<p><font size="2" face="Courier New">Aggressive `actOn` Red    
+= drive 0.3</font> <br></p>
+<p><font size="2" face="Courier New">Drive `collision` Drive = prob 
+0.3</font></p>
+<p><font size="2" face="Courier New">_     `collision` 
+_     = prob 0.0</font> <br></p>
+<p><font size="2" face="Courier New">driver = freqs [(0.2, Cautious), 
+(0.6, Normal), (0.2, Aggressive)]</font> <br></p>
+<p><font size="2" face="Courier New">simulate d1 d2 light = do</font></p>
+<p><font size="2" face="Courier New">    a1 &lt;- d1 
+`actOn` light</font></p>
+<p><font size="2" face="Courier New">    a2 &lt;- d2 
+`actOn` light</font></p>
+<p><font size="2" face="Courier New">    a1 `collision` 
+a2</font> <br></p>
+<p><font size="2" face="Courier New">simulateOverDrivers light = do</font></p>
+<p><font size="2" face="Courier New">    d1 &lt;- driver</font></p>
+<p><font size="2" face="Courier New">    d2 &lt;- driver</font></p>
+<p><font size="2" face="Courier New">    simulate d1 
+d2 light</font> <br></p>
+<p><font size="2" face="Courier New">probCollisionOnRed = probability 
+(==True) (simulateOverDrivers Red)</font></p>
+<p><font size="2" face="Courier New">probCollisionOfTwoAggressiveOnY<WBR>ellow 
+= probability (==True) (simulate Aggressive Aggressive Yellow)</font> <br>
+</p>
+<p align="justify"><font size="2" face="Arial">И вновь тот 
+факт, что мы «усмотрели» в задаче монаду, 
+позволил выразить ее решение максимально 
+близко к предметной области.</font></p>
+<p><font color="#01799F" size="5" face="Arial"><b>Обобщенные 
+монадные вычисления 
+и монадные комбинаторы</b></font></p>
+<p align="justify"><font size="2" face="Arial">Мы увидели несколько 
+примеров задач, хорошо выражающихся в 
+терминах монад – то есть, одна из «заслуг» 
+монад – это используемая ими терминология, 
+позволяющая компактно описывать некоторые 
+задачи и шаблоны вычислений. Однако одна 
+лишь терминология – это недостаточная 
+причина, чтобы вводить дополнительную 
+абстракцию в язык. Чтобы абстракция была 
+полезной, необходимо, чтобы существовали 
+операции, пользующиеся этой абстракцией 
+как «черным ящиком». В данном случае речь 
+идет об операциях, которые служат одинаковой 
+цели независимо от того, к какой монаде 
+они применены, то есть, об операциях, полиморфных 
+относительно монадного типа: </font><font size="2" face="Courier New"><b>op 
+:: (Monad m) =&gt; ... m  ... </b></font><font size="2" face="Arial">С 
+первого взгляда неочевидно, что такие 
+операции вообще могут существовать и 
+быть полезными – ведь рассмотренные 
+нами монады были абсолютно разными и 
+использовались для разных целей. Однако 
+же они существуют.</font> <br></p>
+<p><font color="#01799F" size="3" face="Arial"><b>Простейшие 
+монадные комбинаторы</b></font></p>
+<p align="justify"><font size="2" face="Arial">Первая из виденных 
+нами ситуаций, когда одинаковым образом 
+использовались разные монады – это do-синтаксис. 
+Его можно лишь с натяжкой назвать «операцией», 
+однако он работает одинаковым образом 
+для всех монад, и является для них одинаково 
+полезным.</font></p>
+<p align="justify"><font size="2" face="Arial">Далее: В приведенных 
+программах нередко встречались фрагменты 
+кода, похожие на этот:</font></p>
+<p><font size="2" face="Courier New">do a &lt;- foo        
+-- foo :: m a</font></p>
+<p><font size="2" face="Courier New">   b &lt;- bar        
+-- bar :: m b</font></p>
+<p><font size="2" face="Courier New">   return (f a b)  
+-- f :: a -&gt; b -&gt; m c</font></p>
+<p align="justify"><font size="2" face="Arial">Почему не написать 
+просто </font><font size="2" face="Courier New"><b>return (f 
+foo bar)</b></font><font size="2" face="Arial">? Увы, такое 
+выражение не пройдет проверку типов. 
+Но этот шаблон встречается очень часто, 
+поэтому имеет смысл его абстрагировать.</font></p>
+<p><font size="2" face="Courier New">liftM :: (a -&gt; b) -&gt; (m a 
+-&gt; m b)</font></p>
+<p><font size="2" face="Courier New">liftM f ma = do a &lt;- ma ; return 
+(f a)</font> <br></p>
+<p><font size="2" face="Courier New">liftM2 :: (a -&gt; b -&gt; c) -&gt; 
+m a -&gt; m b -&gt; m c</font></p>
+<p><font size="2" face="Courier New">liftM2 f ma mb = do a &lt;- ma; 
+b &lt;- mb; return (f a b)</font> <br></p>
+<p><font size="2" face="Courier New">И т.п.</font></p>
+<p align="justify"><font size="2" face="Arial">Функции </font><font size="2" face="Courier New"><b>liftM</b></font><font size="2" face="Arial">, </font><font size="2" face="Courier New"><b>liftM2</b></font><font size="2" face="Arial">, 
+… входят в стандартную библиотеку и находятся 
+в модуле Control.Monad.</font></p>
+<p align="justify"><font size="2" face="Arial">Теперь можно 
+писать, например, так: (этот фрагмент кода 
+читает с клавиатуры строку и возвращает 
+ее в верхнем регистре)</font></p>
+<p><font size="2" face="Courier New">readAndUpper :: IO String</font></p>
+<p><font size="2" face="Courier New">readAndUpper = liftM (map toUpper) 
+getLine</font></p>
+<p align="justify"><font size="2" face="Arial">Или так (монада 
+Dist):</font></p>
+<p><font size="2" face="Courier New">twoDrivers :: Dist (Driver,Driver)</font></p>
+<p><font size="2" face="Courier New">twoDrivers = liftM2 (,) driver 
+driver</font> <br></p>
+<p align="justify"><font size="2" face="Arial">Теперь представим 
+себе, что требуется распечатать список 
+значений </font><font size="2" face="Courier New"><b>values</b></font><font size="2" face="Arial"> – выполнить для каждого 
+значения </font><font size="2" face="Courier New"><b>putStrLn</b></font><font size="2" face="Arial">. </font></p>
+<p><font size="2" face="Courier New">map putStrLn values</font></p>
+<p align="justify"><font size="2" face="Arial">Однако, увы, 
+это – не решение. Посмотрим на типы:</font></p>
+<p><font size="2" face="Courier New">values :: [String]</font></p>
+<p><font size="2" face="Courier New">putStrLn :: String -&gt; IO ()</font></p>
+<p><font size="2" face="Courier New">map putStrLn values :: [IO ()]</font></p>
+<p align="justify"><font size="2" face="Arial">То есть, получается 
+список значений типа </font><font size="2" face="Courier New"><b>IO 
+() </b></font><font size="2" face="Arial">– список действий. 
+Но поскольку Хаскелл – ленивый язык, 
+то элементы списка не форсируются, а так 
+и остаются пока невычисленными вызовами </font><font size="2" face="Courier New"><b>putStrLn</b></font><font size="2" face="Arial">. 
+Теперь, чтобы выполнить этот список действий, 
+необходимо выполнить каждое из них по 
+очереди.</font></p>
+<p><font size="2" face="Courier New">doIOs [] = return []</font></p>
+<p><font size="2" face="Courier New">doIOs (a:as) = do a ; doIOs as </font> <br>
+</p>
+<p><font size="2" face="Courier New">doIOs (map putStrLn values)</font></p>
+<p align="justify"><font size="2" face="Arial">Если мы посмотрим 
+в интерпретаторе на тип doIOs , то получится, 
+что он – </font><font size="2" face="Courier New"><b>doIOs :: 
+(Monad m) =&gt; [m a] -&gt; m [a]</b></font><font size="2" face="Arial"> 
+. В нем не упоминается монада IO, он работает 
+одинаково для всех монад! Логично слово 
+«IO» убрать и из названия – получится 
+стандартная функция</font></p>
+<p><font size="2" face="Courier New">sequence :: Monad m =&gt; [m a] 
+-&gt; m [a]</font></p>
+<p align="justify"><font size="2" face="Arial">и похожая на 
+нее</font></p>
+<p><font size="2" face="Courier New">mapM :: Monad m =&gt; (a -&gt; 
+m b) -&gt; [a] -&gt; m [b]</font></p>
+<p><font size="2" face="Courier New">mapM f as = sequence (map f as)</font></p>
+<p align="justify"><font size="2" face="Arial">Из аналогичных 
+соображений и аналогичным образом в стандартной 
+библиотеке определен еще ряд аналогов 
+списочных функций и управляющих структур 
+для монад:</font></p>
+<p><font size="2" face="Courier New">when :: Monad m =&gt; Bool -&gt; 
+m () -&gt; m ()</font></p>
+<p><font size="2" face="Courier New">when b m = if b then m else return 
+()</font> <br></p>
+<p><font size="2" face="Courier New">replicateM :: Monad m =&gt; Int 
+-&gt; m a -&gt; m [a]</font></p>
+<p><font size="2" face="Courier New">foldM :: Monad m =&gt; (a -&gt; 
+b -&gt; m a) -&gt; a -&gt; [b] -&gt; m a</font></p>
+<p align="justify"><font size="2" face="Arial">и некоторые 
+другие. Для случая, когда в вычислении 
+важны только его побочные эффекты, а не 
+возвращаемый результат, у этих операций 
+есть аналоги с подчеркиванием на конце:</font></p>
+<p><font size="2" face="Courier New">mapM_ :: Monad m =&gt; (a -&gt; 
+m b) -&gt; [a] -&gt; m ()</font></p>
+<p><font size="2" face="Courier New">sequence_ :: Monad m =&gt; [m a] 
+-&gt; m ()</font></p>
+<p align="justify"><font size="2" face="Arial">и т.п.</font> <br>
+</p>
+<p><font color="#01799F" size="3" face="Arial"><b>Зачем 
+нужна эта общность?</b></font></p>
+<p align="justify"><font size="2" face="Arial">Пока неочевидно, 
+как могут использоваться вышеописанные 
+комбинаторы (кроме </font><font size="2" face="Courier New"><b>liftM</b></font><font size="2" face="Arial">), кроме как для структуризации 
+действий в монаде </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial">. Приведем несколько примеров:</font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">Помимо монады </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial"> 
+  – монады «вычислений с изменяемым миром», 
+  очевидно, можно использовать эти комбинаторы 
+  и в похожей монаде </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial">, монаде «вычислений с изменяемым 
+  состоянием» для тех же самых целей. Например, 
+  чтобы собрать из списка уникальные элементы, 
+  можно «пройтись» по нему </font><font size="2" face="Courier New"><b>mapM 
+  insert </b></font><font size="2" face="Arial">, где </font><font size="2" face="Courier New"><b>insert 
+  :: (Ord a) =&gt; State (BinaryTree 
+  a) ()</b></font><font size="2" face="Arial">, а </font><font size="2" face="Courier New"><b>BinaryTree</b></font><font size="2" face="Arial"> – тип сбалансированных 
+  деревьев:</font></li>
+</ul>
+<p><font size="2" face="Courier New">collectDistinct :: (Ord a) =&gt; 
+[a] -&gt; BinaryTree a</font></p>
+<p><font size="2" face="Courier New">collectDistinct as = s’ </font></p>
+<p><font size="2" face="Courier New">    where (s’, 
+_)  = runState (mapM_ insert) emptyBinaryTree</font></p>
+<p><font size="2" face="Courier New">          
+insert a = do t &lt;- get</font></p>
+<p><font size="2" face="Courier New">                        
+put (insertBinTree a t)</font></p>
+<p><font size="2" face="Courier New">                        
+return ()</font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">Сгенерируем в 
+  монаде Dist распределение суммы 4 чисел, 
+  равномерно распределенных в интервале 
+  соответственно от 1 до 1,2,3 и 4</font></li>
+</ul>
+<p><font size="2" face="Courier New">uniform a = freqs [(1.0/fromInteger 
+a, i) | i &lt;- [1..a]]</font></p>
+<p><font size="2" face="Courier New">sumDist = foldM (\s a -&gt; do 
+da &lt;- uniform a</font></p>
+<p><font size="2" face="Courier New">                            
+return (s + da)) </font></p>
+<p><font size="2" face="Courier New">                
+[1..4]</font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">Создадим парсер, 
+  выделяющий из строки 5 чисел, разделенных 
+  пробелом:</font></li>
+</ul>
+<p><font size="2" face="Courier New">fiveNumbers = replicateM 5 ((zeroOrMore 
+(char ‘ ‘)) &gt;&gt; readNumber)</font></p>
+<p align="justify"><font size="2" face="Arial">Особого внимания 
+заслуживают функции, заканчивающиеся 
+на подчеркивание и имеющие тип возвращаемого  
+значения </font><font size="2" face="Courier New"><b>m ()</b></font><font size="2" face="Arial">. Они как будто бы не производят 
+никаких <i>вычислений</i> – с этими функциями 
+стоит использовать только монады, обладающие <i>
+эффектами</i>. К этим эффектам относятся 
+не только побочные эффекты монады </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial"> 
+– скорее, наличие эффектов следует воспринимать 
+как осмысленность оператора </font><font size="2" face="Courier New"><b>&gt;&gt;</b></font><font size="2" face="Arial"> и </font><font size="2" face="Courier New"><b>do</b></font><font size="2" face="Arial"> без </font><font size="2" face="Courier New"><b>&lt;-</b></font><font size="2" face="Arial"> (осмысленность последовательностей 
+вида </font><font size="2" face="Courier New"><b>do 
+foo; bar; baz</b></font><font size="2" face="Arial">). Сформулировать 
+это свойство формально, судя по всему, 
+невозможно; это довольно нечеткое понятие, 
+но можно сказать, что монады </font><font size="2" face="Courier New"><b>List</b></font><font size="2" face="Arial"> и </font><font size="2" face="Courier New"><b>Maybe </b></font><font size="2" face="Arial">не обладают этим свойством. </font></p>
+<p align="justify"><font size="2" face="Arial">Например, бессмысленна 
+последовательность </font><font size="2" face="Courier New"><b>do 
+[1,2,3]; [5,6]</b></font><font size="2" face="Arial"> – ее результатом 
+является </font><font size="2" face="Courier New"><b>[5,6,5,6,5,6]</b></font><font size="2" face="Arial">, но значение </font><font size="2" face="Courier New"><b>[1,2,3]</b></font><font size="2" face="Arial"> было фактически выброшено 
+на помойку, использовалась лишь его длина. 
+Маловероятно, что такой способ использования 
+монады List может быть полезным; таким образом, 
+в монаде List бессмысленно использовать 
+функции </font><font size="2" face="Courier New"><b>mapM_</b></font><font size="2" face="Arial"> , </font><font size="2" face="Courier New"><b>sequenceM_</b></font><font size="2" face="Arial"> и </font><font size="2" face="Courier New"><b>replicateM_</b></font><font size="2" face="Arial">. Для монады </font><font size="2" face="Courier New"><b>Maybe</b></font><font size="2" face="Arial"> , аналогично, будет использоваться 
+не содержимое значений, а лишь тот факт, 
+являются ли они </font><font size="2" face="Courier New"><b>Just</b></font><font size="2" face="Arial"> или </font><font size="2" face="Courier New"><b>Nothing</b></font><font size="2" face="Arial"> – трудно придумать ситуацию, 
+в которой не хватило бы обычного типа </font><font size="2" face="Courier New"><b>Bool</b></font><font size="2" face="Arial">.</font></p>
+<p align="justify"><font size="2" face="Arial">Наконец, рассмотрим 
+несколько менее тривиальный пример, в 
+котором создадим свой собственный полиморфный 
+относительно монады комбинатор, а также 
+коснемся темы монадных трансформеров.</font></p>
+<p align="justify"><font color="#506580" size="2" face="Arial">Полиморфные 
+относительно монад комбинаторы, действительно, 
+почти всегда реализуют либо «императивный» 
+обход какой-либо структуры, либо используют 
+реализацию </font><font size="2" face="Courier New"><b>fail</b></font><font color="#506580" size="2" face="Arial"> из монады для специализированной 
+обработки ошибок. Так, монада интерпретатора 
+какого-либо языка может реализовывать </font><font size="2" face="Courier New"><b>fail</b></font><font color="#506580" size="2" face="Arial"> 
+, выводя стек вызовов, приводящих к ошибке. 
+Тогда разумно реализовывать операции, 
+могущие вызвать ошибку, полиморфными 
+относительно монады, и рапортовать об 
+ошибке с помощью </font><font size="2" face="Courier New"><b>fail</b>.</font> <br>
+</p>
+<p><font color="#01799F" size="3" face="Arial"><b>Пример: SAX</b></font></p>
+<p align="justify"><font size="2" face="Arial">Пусть, например, 
+мы пишем программу, которая обрабатывает 
+какие-нибудь древовидные структуры – 
+например, XML-файлы. В таких программах 
+очень часто используются операции, связанные 
+с обходом дерева – например, печать его 
+на экран, или сериализация в поток, или 
+подсчет числа узлов, удовлетворяющих 
+определенному условию, или получение 
+списка всех узлов, или вычисление какой-то 
+агрегатной функции от этих узлов. Скорее 
+всего, нам понадобится функция для обхода 
+дерева, производящая над каждым узлом 
+какое-то действие. Однако, если этому 
+действию будет передаваться лишь содержимое 
+узла, то оно так ничего и не узнает о взаимном 
+расположении узлов в дереве – поэтому 
+лучше использовать модель SAX (Simple API for 
+XML; поддерживается большинством современных 
+XML-парсеров) – передавать обработчику 
+события «вошли в поддерево» и «вышли 
+из поддерева».</font></p>
+<p><font size="2" face="Courier New">-- Tree datatype</font> <br>
+</p>
+<p><font size="2" face="Courier New">data Node = Node {tag :: String, 
+attributes :: [(String,String)]}</font></p>
+<p><font size="2" face="Courier New">data Tree = Tree Node [Tree]</font></p>
+<p><font size="2" face="Courier New">data NodeEvent = Enter Node | Leave 
+Node</font></p>
+<p align="justify"><font size="2" face="Arial">Тогда функция 
+обхода будет выглядеть примерно так: </font><font size="2" face="Courier New"><b>walk :: (NodeEvent -&gt; 
+действие) -&gt; Tree -&gt; 
+результат</b></font><font size="2" face="Arial">. Однако 
+обычно в реализациях SAX функция обхода 
+ничего не возвращает; вся обработка и 
+вычисление чего-либо ложится на обработчик. 
+Сделаем так и мы: </font><font size="2" face="Courier New"><b>walk 
+:: (NodeEvent -&gt; действие) -&gt; 
+Tree -&gt; нетРезультата</b></font><font size="2" face="Arial">.  </font></p>
+<p align="justify"><font size="2" face="Arial">Что может быть 
+использовано в качестве действия? Конечно, 
+чистая функция там будет неуместна – 
+поскольку ее результат вычисления все 
+равно не попадет в ответ и канет в бездну. 
+Логично использовать монадическое действие 
+в монаде с <i>эффектами</i> (как описано 
+ранее) – т.е. </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial">, </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial"> и т.п.</font></p>
+<p align="justify"><font size="2" face="Arial">Итого, </font><font size="2" face="Courier New"><b>walk :: 
+Monad m =&gt; (NodeEvent -&gt; m ()) -&gt; 
+Tree -&gt; m ()</b></font><font size="2" face="Arial"> – проходится 
+по дереву внутри обладающей эффектами 
+монады </font><font size="2" face="Courier New"><b>m</b></font><font size="2" face="Arial">, вызывая для каждого события 
+входа или выхода некоторое действие в 
+этой монаде. Перейдем к реализации:</font></p>
+<p><font size="2" face="Courier New">walk :: (Monad m) =&gt; (NodeEvent 
+-&gt; m a) -&gt; Tree -&gt; m ()</font></p>
+<p><font size="2" face="Courier New">walk f (Tree n ts) = do f (Enter 
+n)</font></p>
+<p><font size="2" face="Courier New">                        
+mapM_ (walk f) ts</font></p>
+<p><font size="2" face="Courier New">                        
+f (Leave n)</font></p>
+<p><font size="2" face="Courier New">                        
+return ()</font> <br></p>
+<p align="justify"><font size="2" face="Arial">Теперь реализуем 
+при помощи этой функции «красивую» (с 
+отступами) сериализацию дерева в XML. Печать 
+на экран текста с отступами имеет две 
+особенности:</font></p>
+<ul type="DISC">
+  <li><font size="2" face="Arial">Имеются побочные 
+  эффекты, т.е. будет задействована монада </font><font size="2" face="Courier New"><b>IO</b></font></li>
+  <li><font size="2" face="Arial">Имеется «протаскиваемое» 
+  состояние – текущий уровень отступа</font></li>
+</ul>
+<p align="justify"><font size="2" face="Arial">Первая особенность 
+заставляет использовать монаду </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial">, 
+вторая наталкивает на мысль о </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial">. Однако ни одна из них сама 
+по себе не подходит. Реализуем простую 
+собственную монаду – монаду «вывода 
+на экран с отступами»:</font></p>
+<p><font size="2" face="Courier New">newtype IndentIO a = IndentIO { 
+runWithIndent :: Int -&gt; IO (Int, a) }</font></p>
+<p><font size="2" face="Courier New">instance Monad IndentIO where</font></p>
+<p><font size="2" face="Courier New">    return a = IndentIO 
+$ \i -&gt; return (i, a)</font></p>
+<p><font size="2" face="Courier New">    (IndentIO r) 
+&gt;&gt;= f = IndentIO r&#39;</font></p>
+<p><font size="2" face="Courier New">        
+where r&#39; i = do (i&#39;, a) &lt;- r i</font></p>
+<p><font size="2" face="Courier New">                        
+runWithIndent (f a) i&#39;<b>         
+              </b></font></p>
+<p align="justify"><font size="2" face="Arial">В этой монаде 
+значение – это функция, принимающая текущий 
+уровень отступа, производящая некоторое 
+действие с побочными эффектами и возвращающая 
+новый уровень отступа. Реализация очень 
+похожа на реализацию монады State, однако 
+протаскивание состояния происходит внутри 
+монады IO.</font></p>
+<p align="justify"><font size="2" face="Arial">Вот несколько 
+функций, которые нам определенно пригодятся:</font></p>
+<p><font size="2" face="Courier New">justIO action = IndentIO $ \i -&gt; 
+do action ; return (i,()) -- Производит действие, 
+не меняя отступ</font></p>
+<p><font size="2" face="Courier New">indentMore    = 
+IndentIO $ \i -&gt; return (i+4, ())          
+-- Увеличивает отступ, не производя действия</font></p>
+<p><font size="2" face="Courier New">indentLess    = 
+IndentIO $ \i -&gt; return (i-4, ())          
+-- Уменьшает   отступ, не производя 
+действия</font></p>
+<p><font size="2" face="Courier New">getIndent     
+= IndentIO $ \i -&gt; return (i, i)             
+-- Возвращает  отступ, не производя 
+действия</font> <br></p>
+<p><font size="2" face="Courier New">printIndent s = do i &lt;- getIndent                     <WBR>     
+-- Печатает строку с отступом</font></p>
+<p><font size="2" face="Courier New">                   
+justIO $ putStrLn (replicate i &#39; &#39; ++ s)</font></p>
+<p align="justify"><font size="2" face="Arial">А теперь можно 
+использовать эти функции и решить исходную 
+задачу:</font></p>
+<p><font size="2" face="Courier New">-- Порождает строку 
+вида &lt;tag atr1=”v1” atr2=”v2”&gt;</font></p>
+<p><font size="2" face="Courier New">showEnter (Node tag ats) = &quot;&lt;&quot;++tag++ 
+concat[&quot; &quot;++n++&quot;=\&quot;&quot;++v++&quot;\&quot;&quot; 
+| (n,v) &lt;- ats] ++&quot;&gt;&quot;</font></p>
+<p><font size="2" face="Courier New">-- Порождает строку 
+вида &lt;/tag&gt;</font></p>
+<p><font size="2" face="Courier New">showLeave (Node tag _)   
+= &quot;&lt;/&quot;++tag++&quot;&gt;&quot;</font> <br></p>
+<p><font size="2" face="Courier New">printTree = walk p</font></p>
+<p><font size="2" face="Courier New">    where p (Enter 
+node) = do printIndent (showEnter node)</font></p>
+<p><font size="2" face="Courier New">                              
+indentMore</font></p>
+<p><font size="2" face="Courier New">          
+p (Leave node) = do indentLess</font></p>
+<p><font size="2" face="Courier New">                              
+printIndent (showLeave node)</font> <br></p>
+<p align="justify"><font size="2" face="Arial">Этот прием – 
+совмещение нескольких монад в одной – 
+требуется довольно-таки часто, и не хочется 
+в каждом таком случае писать новую монаду. 
+Для этого существуют <i>монадные трансформеры</i>, 
+однако данная тема выходит за рамки этого 
+текста. Тем не менее, пример с </font><font size="2" face="Courier New"><b>IndentIO</b></font><font size="2" face="Arial"> хорошо показывает принцип 
+работы монадных трансформеров и, по сути, 
+является их частным случаем, специализированным 
+для двух конкретных монад. Подробно ознакомиться 
+с монадными трансформерами можно в [B.7] 
+и [B.12].</font> <br></p>
+<p align="justify"><font size="2" face="Arial">С помощью функции </font><font size="2" face="Courier New"><b>walk</b></font><font size="2" face="Arial"> 
+и монады </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial"> можно также, например, посчитать 
+количество узлов, удовлетворяющих некоторому 
+предикату:</font></p>
+<p><font size="2" face="Courier New">countNodes p tree = execState (walk 
+(\e -&gt; when (counts e) (modify (1+))) tree) 0</font></p>
+<p><font size="2" face="Courier New">    where counts 
+(Enter n) = p n</font></p>
+<p><font size="2" face="Courier New">          
+counts _         = False</font></p>
+<p align="justify"><font size="2" face="Arial">В этом коде 
+в качестве обходчика используется функция, 
+которая в случае события входа в узел, 
+удовлетворяющий предикату, увеличивает 
+переменную состояния на 1. Результатом 
+обхода, согласно типу </font><font size="2" face="Courier New"><b>walk</b></font><font size="2" face="Arial">, является значение типа </font><font size="2" face="Courier New"><b>State 
+Int () </b></font><font size="2" face="Arial">– то есть, это 
+еще не ответ, а лишь функция, готовая его 
+вычислить, если ей передать начальное 
+состояние. Для этого вызывается </font><font size="2" face="Courier New"><b>execState</b></font><font size="2" face="Arial"> 
+со вторым аргументом 0 (начать счет с нуля).</font></p>
+<p><font color="#01799F" size="5" face="Arial"><b>Заключение</b></font></p>
+<p align="justify"><font size="2" face="Arial">Мы рассмотрели 
+несколько «граней» монад – вывели саму 
+их концепцию как обобщение нескольких 
+императивных идиом, увидели, как некоторые 
+нетривиальные практические задачи формулируются 
+и решаются в терминах монад, а также увидели, 
+как может быть полезна сама <i>абстракция</i> 
+монады, и то, какие операции этой абстракцией 
+могут пользоваться.</font></p>
+<p align="justify"><font size="2" face="Arial">В процессе выяснилось, 
+что монады могут применяться, в основном, 
+для двух разных целей – для структуризации 
+потока выполнения и описания императивных 
+вычислений с эффектами (монада </font><font size="2" face="Courier New"><b>IO</b></font><font size="2" face="Arial">, </font><font size="2" face="Courier New"><b>State</b></font><font size="2" face="Arial">, </font><font size="2" face="Courier New"><b>IndentIO</b></font><font size="2" face="Arial">), 
+и для структуризации потока данных (монады </font><font size="2" face="Courier New"><b>Maybe</b></font><font size="2" face="Arial">, </font><font size="2" face="Courier New"><b>List</b></font><font size="2" face="Arial">, </font><font size="2" face="Courier New"><b>Dist</b></font><font size="2" face="Arial">). 
+Некоторые монады могут принадлежать 
+к обоим классам (</font><font size="2" face="Courier New"><b>Parser</b></font><font size="2" face="Arial">). Операции, полиморфные относительно 
+монады, почти всегда используются с монадами 
+из первого класса.</font></p>
+<p align="justify"><font size="2" face="Arial">Также мы затронули 
+тему монадных трансформеров – составных 
+монад, совмещающих в себе особенности 
+нескольких простых – однако их подробное 
+рассмотрение осталось за кадром.</font></p>
+<p align="justify"><font size="2" face="Arial">Кроме того, 
+за кадром осталась еще одна интересная 
+тема: теоретическое обоснование концепции 
+монад и их формулировка в терминах теории 
+категорий. Эта тема особенно интересна 
+потому, что монады изначально были открыты 
+в теории категорий, и лишь спустя некоторое 
+время Philip Wadler применил их в программировании. </font></p>
+<p align="justify"><font size="2" face="Arial">Автор надеется, 
+что текст выполнил свою задачу и у читателя 
+сложилось интуитивное понимание работы 
+монад и «чутье» на них, а также появился 
+интерес к изучению не затронутых в этой 
+статье тем.</font></p>
+<p><font color="#01799F" size="5" face="Arial"><b>Благодарности</b></font></p>
+<p align="justify"><font size="2" face="Arial">Автор выражает 
+благодарность Денису Москвину, Ивану 
+Веселову и Олегу Цареву за ценные замечания 
+и предложения к ранним версиям этого 
+текста, а Юлии Астаховой – за оные же, 
+к поздним версиям, за моральную поддержку 
+и проявленное терпение. Ценные замечания 
+о функциях, полиморфных относительно 
+монад, дали участники IRC-канала #haskell с 
+никами <b>dons</b>, <b>bd_</b> и <b>Saizan</b>. Ряд ошибок 
+и неточностей после публикации был найден 
+и исправлен благодаря Ивану Тарасову, 
+Максиму Талдыкину и Артему Шалхакову.</font></p>
+<p><font color="#01799F" size="5" face="Arial"><b>Ссылки</b></font></p>
+<p><font color="#01799F" size="3" face="Arial"><b>A. 
+Основы Haskell</b></font></p>
+<ol type="1" start="5">
+  <li><a href="http://darcs.haskell.org/yaht/yaht.pdf" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://darcs.haskell.org/yaht<WBR>/yaht.pdf</u></font></a><font size="2" face="Arial"> - Yet Another Haskell Tutorial, один из 
+  самых простых и в то же время больших 
+  туториалов. </font></li>
+  <li><a href="http://www.rsdn.ru/article/haskell/haskell_part1.xml" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.rsdn.ru/article<WBR>/haskell/haskell_part1.xml</u></font></a><font size="2" face="Arial"> и </font><a href="http://www.rsdn.ru/article/haskell/haskell_part2.xml" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.rsdn.ru/article<WBR>/haskell/haskell_part2.xml</u></font></a><font size="2" face="Arial"> - перевод статьи «A gentle introduction 
+  to haskell»</font></li>
+  <li><a href="http://ru.wikibooks.org/wiki/Основы_функционального_программирования" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://ru.wikibooks.org/wiki<WBR>/Основы_функционального<WBR>_программирования</u></font></a><font size="2" face="Arial"> - курс лекций Романа Душкина</font></li>
+  <li><a href="http://www.haskell.org/haskellwiki/Tutorials" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.haskell.org/haskellw<WBR>iki/Tutorials</u></font></a><font size="2" face="Arial"> - список туториалов по языку 
+  Haskell</font></li>
+</ol>
+<p><font color="#01799F" size="3" face="Arial"><b>B. 
+Другие учебные статьи о монадах</b></font></p>
+<ol type="1">
+  <li><a href="http://citeseer.ist.psu.edu/wadler95monads.html" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://citeseer.ist.psu.edu<WBR>/wadler95monads.html</u></font></a><font size="2" face="Arial"> - классическая статья Филипа 
+  Вадлера, с которой и началось «победное 
+  шествие» монад</font></li>
+  <li><a href="http://darcs.haskell.org/yaht/yaht.pdf" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://darcs.haskell.org/yaht<WBR>/yaht.pdf</u></font></a><font size="2" face="Arial"> - содержит главу про монады, 
+  посвященную, в основном, монадам, похожим 
+  на ST </font></li>
+  <li><a href="http://www.haskell.org/haskellwiki/Monad" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.haskell.org/haskellw<WBR>iki/Monad</u></font></a><font size="2" face="Arial"> - статья на haskellwiki</font></li>
+  <li><a href="http://www.haskell.org/haskellwiki/Tutorials" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.haskell.org/haskellw<WBR>iki/Tutorials#Using_monads</u></font></a><font size="2" face="Arial"> – список монадных туториалов</font></li>
+  <li><a href="http://www.haskell.org/haskellwiki/Monad_tutorials_timeline" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.haskell.org/haskellw<WBR>iki/Monad_tutorials_timeline</u></font></a><font size="2" face="Arial"> - список монадных туториалов 
+  по годам, с хорошими аннотациями</font></li>
+  <li><a href="http://www.haskell.org/all_about_monads/html/index.html" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.haskell.org/all<WBR>_about_monads/html/index.html</u></font></a><font size="2" face="Arial"> - большой и подробный туториал, 
+  с описанием всех стандартных монад и 
+  с главой про трансформеры монад</font></li>
+  <li><a href="http://book.realworldhaskell.org/beta/monads.html" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://book.realworldhaskell<WBR>.org/beta/monads.html</u></font></a><font size="2" face="Arial"> , </font><a href="http://book.realworldhaskell.org/beta/monadcase.html" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://book.realworldhaskell<WBR>.org/beta/monadcase.html</u></font></a><font size="2" face="Arial"> , </font><a href="http://book.realworldhaskell.org/beta/monadtrans.html" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://book.realworldhaskell<WBR>.org/beta/monadtrans.html</u></font></a><font size="2" face="Arial"> - главы книги Real World Haskell о 
+  монадах. Очень подробно, на практических 
+  примерах. Рассматриваются, в основном, 
+  Maybe, State и IO.</font></li>
+  <li><a href="http://www.haskell.org/haskellwiki/Monads_as_containers" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.haskell.org/haskellw<WBR>iki/Monads_as_containers</u></font></a><font size="2" face="Arial"> и </font><a href="http://community.livejournal.com/ru_lambda/12467.html" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://community.livejournal<WBR>.com/ru_lambda/12467.html</u></font></a><font size="2" face="Arial"> - статья Monads as containers и ее 
+  перевод на русский язык</font></li>
+  <li><a href="http://research.microsoft.com/~simonpj/papers/marktoberdorf/" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://research.microsoft.com/<WBR>~simonpj/papers/marktoberdorf/</u></font></a><font size="2" face="Arial"> - статья Simon Peython Jones “Tackling 
+  The Awkward Squad”, прекрасно рассказывает о 
+  монаде IO</font></li>
+  <li><a href="http://rsdn.ru/article/haskell/haskell_part2.xml" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://rsdn.ru/article/haskell<WBR>/haskell_part2.xml#E1JAC</u></font></a><font size="2" face="Arial"> – Часть перевода статьи 
+  «A gentle introduction to Haskell», посвященная монадам. 
+  Содержит интересный пример нестандартной 
+  монады.</font></li>
+  <li><a href="http://members.chello.nl/hjgtuyl/tourdemonad.html" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://members.chello.nl<WBR>/hjgtuyl/tourdemonad.html</u></font></a><font size="2" face="Arial"> – подробный обзор всего, 
+  связанного с монадами в стандартной библиотеке 
+  хаскелла</font></li>
+  <li><a href="http://spbhug.folding-maps.org/wiki/MonadTransformers" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://spbhug.folding-maps.org<WBR>/wiki/MonadTransformers</u></font></a><font size="2" face="Arial"> - рассказ Михаила Митрофанова 
+  о монадных трансформерах</font></li>
+</ol>
+<p><font color="#01799F" size="3" face="Arial"><b>C. 
+Научные статьи о монадах</b></font></p>
+<ol type="1">
+  <li><a href="http://books.google.com/books?hl=en&amp;lr=&amp;id=AiMwYZs-TGkC&amp;oi=fnd&amp;pg=PA113&amp;ots=prga1Pri15&amp;sig=3Z5qGXfwK1AWI6RKZ5Jc2ubyeTg" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://books.google.com/books<WBR>?hl=en&amp;...</u></font></a><font size="2" face="Arial"> - Philip Wadler, “How to replace failure by 
+  a list of successes”</font></li>
+  <li><a href="http://okmij.org/ftp/Computation/monads.html" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://okmij.org/ftp/Computatio<WBR>n/monads.html</u></font></a><font size="2" face="Arial"> - статьи Олега Киселева о 
+  монадах, в т.ч. монаде статистических <i>
+  экспериментов</i> (метод Монте-Карло) и 
+  монаде логического вывода</font></li>
+  <li><a href="http://www.cs.nott.ac.uk/~gmh//monparsing.ps" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.cs.nott.ac.uk/~gmh/<WBR>/monparsing.ps</u></font></a><font size="2" face="Arial"> – Graham Hutton, Erik Meijer - Monadic Parser 
+  Combinators</font></li>
+  <li><a href="http://www.randomhacks.net/darcs/probability-monads/probability-monads.pdf" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.randomhacks.net<WBR>/darcs/probability-monads<WBR>/probability-monads.pdf</u></font></a><font size="2" face="Arial"> - Eric Kidd, “Build your own probability monads” 
+  – статья с несколькими интересными вариациями 
+  на тему вероятностных монад</font></li>
+</ol>
+<p><font color="#01799F" size="3" face="Arial"><b>D. 
+Прочее</b></font></p>
+<ol type="1">
+  <li><a href="http://www.amazon.com/Expert-F-Experts-Voice-Net/dp/1590598504" target="_blank"><font color="#0000FF" size="2" face="Arial"><u>http://www.amazon.com/Expert-F<WBR>-Experts-Voice-Net/dp/159059850<WBR>4</u></font></a><font size="2" face="Arial"> - книга «Expert F#»; представляет 
+  собой по совместительству прекрасное 
+  введение в функциональное программирование 
+  в целом.</font></li>
+</ol>
+
+
+</div>
+
+</div></body></html>
